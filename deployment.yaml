@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keybored-api
+spec:
+  selector:
+    matchLabels:
+      app: keybored-api
+  template:
+    metadata:
+      labels:
+        app: keybored-api
+    spec:
+      imagePullSecrets:
+      - name: github-regcred
+      serviceAccountName: app-manager
+      containers:
+      - name: keybored-api
+        image: ghcr.io/gessfred/keybored-api:latest
+        command: ["python3"]
+        args: ["main.py"]
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 9000
+        env:
+        - name: DB_NAME
+          value: "defaultdb"
+        - name: DB_PORT
+          value: "25060"
+        - name: DB_USER
+          value: "doadmin"
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgre-password
+              key: db_password
+---
+apiVersion: v1
+kind: Service 
+metadata:
+  name: keybored-api-svc
+spec:
+  type: ClusterIP
+  ports:
+  - port: 9000
+    targetPort: 9000
+  selector:
+    app: keybored-api
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hapi-nginx
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  tls:
+  - hosts:
+    - keyb.gessfred.xyz
+    secretName: keybored-tls-cert-secret
+  rules:
+  - host: keyb.gessfred.xyz
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/api"
+        backend:
+          service:
+            name: keybored-api-svc
+            port:
+              number: 8080

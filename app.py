@@ -173,7 +173,7 @@ async def authorize_request(request: Request, call_next):
     response.headers[h] = cors_headers[h]
   return response
 
-@app.post("/events")
+@app.post("/api/events")
 def post_keystrokes(batch: KeystrokesBatch, request: Request, x_user_id: str = Header(default=None), db = Depends(database)):
   batch = batch.dict()
   print(batch)
@@ -187,13 +187,13 @@ def post_keystrokes(batch: KeystrokesBatch, request: Request, x_user_id: str = H
   if len(batch) > 0:
     db.insert("events", batch["events"])
 
-@app.get("/events")
+@app.get("/api/events")
 def get_keystrokes(request: Request, db = Depends(database)):
   return db.query("""
     select * from events
   """)
 
-@app.get("/events/count")
+@app.get("/api/events/count")
 def get_keystrokes(request: Request, db = Depends(database)):
   return {
     "result": db.query("SELECT COUNT(*) FROM events")

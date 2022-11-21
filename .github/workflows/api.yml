@@ -21,3 +21,36 @@ jobs:
     - run: docker push ghcr.io/gessfred/keybored-api:$GITHUB_SHA
     - run: docker build ./ --file ./Dockerfile --tag ghcr.io/gessfred/keybored-api:latest
     - run: docker push ghcr.io/gessfred/keybored-api:latest
+
+  test:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+    - uses: actions/checkout@v3
+    - run: pip install -r requirements.txt
+    - run: pytest ./
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    steps: 
+    - uses: actions/checkout@v3
+    - run: sudo snap install doctl
+    - run: sudo snap connect doctl:kube-config
+    - run: sudo ls /home/runner/
+    - run: sudo mkdir /home/runner/.config/doctl
+    - run: sudo doctl auth init -t ${{ secrets.DIGITAL_OCEAN_TOKEN }}
+    - run: sudo apt-get install -y ca-certificates curl
+    - run: curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+    - run: echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+    - run: sudo apt-get update -y && sudo apt-get install -y kubectl
+    - run: sudo ls /home/runner/.config/doctl/
+    - run: sudo mkdir /root/.kube
+    - run: sudo ls -al /root/.kube
+    - run: sudo doctl kubernetes cluster kubeconfig save k8s-amiscan-1-22-7-do-0-fra1-1648193990670
+    - run: sed -i "s/:latest/:${GITHUB_SHA}/g" ./deployment.yaml
+    - run: sudo kubectl config get-contexts
+    - run: sudo kubectl config use-context do-fra1-k8s-amiscan-1-22-7-do-0-fra1-1648193990670
+    - run: sudo kubectl apply -f deployment.yml
+      name: Shipping... 

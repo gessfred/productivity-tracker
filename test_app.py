@@ -21,7 +21,7 @@ def test_events_crud():
             "is_end_of_line": False
         }
     ]
-    res = client.post("/events", json={"events": test_request})
+    res = client.post("/api/events", json={"events": test_request})
     assert res.status_code == 200
-    res = client.get("/events")
+    res = client.get("/api/events")
     assert res.status_code == 200
