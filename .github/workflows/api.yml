@@ -1,0 +1,25 @@
+name: API CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - run: echo ${{ secrets.REGISTRY_TOKEN }} | docker login ghcr.io -u USERNAME --password-stdin
+    - run: echo "ENV VERSION=$GITHUB_SHA" >> ./Dockerfile
+    - name: Build the Docker image
+      run: docker build ./api --file ./api/Dockerfile --tag ghcr.io/gessfred/keybored-api:$GITHUB_SHA
+    - run: docker push ghcr.io/gessfred/keybored-api:$GITHUB_SHA
+    - run: docker build ./api --file ./api/Dockerfile --tag ghcr.io/gessfred/keybored-api:latest
+    - run: docker push ghcr.io/gessfred/keybored-api:latest
+    - run: docker build ./client --build-arg REACT_APP_VERSION=$GITHUB_SHA --file ./client/Dockerfile --tag ghcr.io/gessfred/hapi-web:$GITHUB_SHA
+    - run: docker push ghcr.io/gessfred/hapi-web:$GITHUB_SHA
