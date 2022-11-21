@@ -58,7 +58,8 @@ class Database:
       "agent_description": "text",
       "source_url": "text",
       "is_end_of_word": "boolean",
-      "is_end_of_line": "boolean"
+      "is_end_of_line": "boolean",
+      "is_return": "boolean"
     }
     sql = create_table("events", self.tables["events"])
     print("SQL Create Table", sql)
@@ -117,6 +118,7 @@ class KeyEvent(BaseModel):
   source_url: str
   is_end_of_word: bool
   is_end_of_line: bool
+  is_return: bool
 
 class KeystrokesBatch(BaseModel):
   events: List[KeyEvent]

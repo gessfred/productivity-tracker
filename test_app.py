@@ -18,7 +18,8 @@ def test_events_crud():
             "session_id": uuid4().hex,
             "source_url": "google.com",
             "is_end_of_word": False,
-            "is_end_of_line": False
+            "is_end_of_line": False,
+            "is_return": False
         }
     ]
     res = client.post("/api/events", json={"events": test_request})
