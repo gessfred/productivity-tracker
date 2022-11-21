@@ -3,6 +3,5 @@ COPY requirements.txt .
 RUN apt update -y && apt install -y python3 python3-pip
 RUN pip3 install -r requirements.txt
 COPY app.py main.py ./
-ADD manifests/ ./manifests/
 
 ENTRYPOINT ["python3", "main.py"]
