@@ -89,15 +89,18 @@ class Database:
     self.pool.putconn(connection)
     return res
 
-db = Database(
-  host="104.248.24.146",#os.getenv("DB_HOST"),
-  port=os.getenv("DB_PORT"),
-  user=os.getenv("DB_USER"),
-  password=os.getenv("DB_PASSWORD"),
-  database=os.getenv("DB_NAME")
-)
+db = None
 
 def database():
+  global db
+  if db is None:
+    db = Database(
+      host="104.248.24.146",#os.getenv("DB_HOST"),
+      port=os.getenv("DB_PORT"),
+      user=os.getenv("DB_USER"),
+      password=os.getenv("DB_PASSWORD"),
+      database=os.getenv("DB_NAME")
+    )
   return db
 
 @app.get("/version")
