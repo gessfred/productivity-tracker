@@ -20,7 +20,12 @@ def create_table(name: str, table: dict) -> str:
 
 def insert(table: str, rows: List[dict], columns: List[str]):
   def encode_col(col): 
-    return (f"'{str(col)}'" if col is not None else 'null')
+    if col is None:
+      return 'null'
+    elif type(col) == bool:
+      return 'true' if col else 'false'
+    else:
+      return f"'{str(col)}'"
   def encode_row(row: dict):
     cols = [encode_col(row.get(c, None)) for c in columns]
     return ','.join(cols)
