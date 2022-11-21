@@ -37,6 +37,8 @@ def insert(table: str, rows: List[dict], columns: List[str]):
       values {inserted_rows}
   """
 
+EVENTS_TABLE = "keyevents"
+
 class Database:
   def __init__(self, host, user, password, database, port):
     self.pool = pool.SimpleConnectionPool(
@@ -53,7 +55,7 @@ class Database:
   def build(self):
     #column_name -> type + constraints
     self.tables = {}
-    self.tables["events"] = {
+    self.tables[EVENTS_TABLE] = {
       "keystroke_id": "bigint generated always as identity",
       "record_time": "timestamp",
       "ingestion_time": "timestamp",
@@ -66,14 +68,14 @@ class Database:
       "is_end_of_line": "boolean",
       "is_return": "boolean"
     }
-    sql = create_table("events", self.tables["events"])
+    sql = create_table(EVENTS_TABLE, self.tables[EVENTS_TABLE])
     print("SQL Create Table", sql)
     self.command(sql)
 
   def insert(self, table: str, data: dict):
     columns = [c for c in self.tables[table] if "generated" not in self.tables[table][c]]
     query = insert(table, data, columns)
-    print("INSERT INTO events", query)
+    print(f"INSERT INTO {table}", query)
     self.command(query)
 
 
@@ -192,19 +194,18 @@ def post_keystrokes(batch: KeystrokesBatch, request: Request, x_user_id: str = H
     event["user_id"] = user_id
     event["batch_id"] = uuid4().hex
     event["agent_description"] = agent_description(request)
-  if len(batch) > 0:
-    db.insert("events", batch["events"])
+  db.insert(EVENTS_TABLE, batch["events"])
 
 @app.get("/api/events")
 def get_keystrokes(request: Request, db = Depends(database)):
-  return db.query("""
-    select * from events
+  return db.query(f"""
+    select * from {EVENTS_TABLE}
   """)
 
 @app.get("/api/events/count")
 def get_keystrokes(request: Request, db = Depends(database)):
   return {
-    "result": db.query("SELECT COUNT(*) FROM events")
+    "result": db.query(f"SELECT COUNT(*) FROM {EVENTS_TABLE}")
   }
 
 @app.get("/api/version")
