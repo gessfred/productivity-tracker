@@ -72,10 +72,11 @@ class Database:
     print("SQL Create Table", sql)
     self.command(sql)
 
-  def insert(self, table: str, data: dict):
+  def insert(self, table: str, data: List[dict]):
+    if len(data) == 0:
+      return
     columns = [c for c in self.tables[table] if "generated" not in self.tables[table][c]]
     query = insert(table, data, columns)
-    print(f"INSERT INTO {table}", query)
     self.command(query)
 
 
@@ -175,7 +176,7 @@ async def authorize_request(request: Request, call_next):
     raise Exception("unauthorized")"""
 
   headers = MutableHeaders(request._headers)
-  headers["X-User-Id"] = "@alice.test"#payload.get("sub", None)
+  headers["X-User-Id"] = "alice@test"#payload.get("sub", None)
   request._headers = headers
   request.scope.update(headers=request.headers.raw)
 
