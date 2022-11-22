@@ -83,18 +83,23 @@ class Database:
     connection = self.pool.getconn()
     connection.set_session(autocommit=True)
     cur = connection.cursor()
-    cur.execute(sql, args)
-    cur.close()
-    self.pool.putconn(connection)
+    try:
+      cur.execute(sql, args)
+    finally:
+      cur.close()
+      self.pool.putconn(connection)
   
   def query(self, sql: str, *args):
     connection = self.pool.getconn()
     connection.set_session(autocommit=True)
     cur = connection.cursor()
-    cur.execute(sql, args)
-    res = cur.fetchall()
-    cur.close()
-    self.pool.putconn(connection)
+    res = None
+    try:
+      cur.execute(sql, args)
+      res = cur.fetchall()
+    finally:
+      cur.close()
+      self.pool.putconn(connection)
     return res
 
 db = Database(
@@ -108,10 +113,6 @@ db = Database(
 def database():
 
   return db
-
-@app.get("/version")
-def get_version():
-  return "0.0.2"
 
 class KeyEvent(BaseModel):
   record_time: datetime 
@@ -186,7 +187,6 @@ async def authorize_request(request: Request, call_next):
 @app.post("/api/events")
 def post_keystrokes(batch: KeystrokesBatch, request: Request, x_user_id: str = Header(default=None), db = Depends(database)):
   batch = batch.dict()
-  print(batch)
   user_id = x_user_id
   ingestion_time = datetime.now()
   for event in batch["events"]:
@@ -205,7 +205,7 @@ def get_keystrokes(request: Request, db = Depends(database)):
 @app.get("/api/events/count")
 def get_keystrokes(request: Request, db = Depends(database)):
   return {
-    "result": db.query(f"SELECT COUNT(*) FROM {EVENTS_TABLE}")
+    "count": db.query(f"SELECT COUNT(*) FROM {EVENTS_TABLE}")[0][0]
   }
 
 @app.get("/api/version")
