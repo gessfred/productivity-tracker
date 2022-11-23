@@ -185,6 +185,17 @@ async def authorize_request(request: Request, call_next):
     response.headers[h] = cors_headers[h]
   return response
 
+class EventsQuery(BaseModel):
+  page_size: Optional[int] 
+  sql: str
+
+@app.post("/api/events/query")
+def post_events_query(query: EventsQuery, x_user_id: str = Header(default=None), db = Depends(database)):
+  data = db.query(query.sql)
+  return {
+    'data': data
+  }
+
 @app.post("/api/events")
 def post_keystrokes(batch: KeystrokesBatch, request: Request, x_user_id: str = Header(default=None), db = Depends(database)):
   batch = batch.dict()
