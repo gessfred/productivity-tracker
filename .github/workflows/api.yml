@@ -28,7 +28,7 @@ jobs:
     steps: 
     - uses: actions/checkout@v3
     - name: Install doctl
-      uses: digitalocean/action-doctl@v2
+      uses: digitalocean/action-doctl@v2.3.0
       with:
         token: ${{ secrets.DIGITAL_OCEAN_TOKEN }}
     # - run: sudo snap install doctl
@@ -40,6 +40,7 @@ jobs:
     # - run: curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
     # - run: echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
     # - run: sudo apt-get update -y && sudo apt-get install -y kubectl
+    - run: /usr/bin/doctl version
     - run: sudo ls /home/runner/.config/doctl/
     - run: sudo mkdir /root/.kube
     - run: sudo ls -al /root/.kube
