@@ -196,10 +196,11 @@ def post_events_query(query: EventsQuery, x_user_id: str = Header(default=None),
     'data': data
   }
 
-@app.post("/api/events")
-def post_keystrokes(batch: KeystrokesBatch, request: Request, x_user_id: str = Header(default=None), db = Depends(database)):
+@app.post("/api/events/{userId}")
+def post_keystrokes(batch: KeystrokesBatch, request: Request, userId: str, x_user_id: str = Header(default=None), db = Depends(database)):
   batch = batch.dict()
   user_id = x_user_id
+  user_id = userId
   ingestion_time = datetime.now()
   for event in batch["events"]:
     event["ingestion_time"] = ingestion_time
