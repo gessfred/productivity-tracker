@@ -19,7 +19,7 @@ def create_table(name: str, table: dict) -> str:
   """
 
 def insert(table: str, rows: List[dict], columns: List[str]):
-  def encode_col(col): 
+  def encode_col(col):
     if col is None:
       return 'null'
     elif type(col) == bool:
@@ -29,7 +29,7 @@ def insert(table: str, rows: List[dict], columns: List[str]):
   def encode_row(row: dict):
     cols = [encode_col(row.get(c, None)) for c in columns]
     return ','.join(cols)
-  rows_as_tuples = [f"({encode_row(row)})" for row in rows] 
+  rows_as_tuples = [f"({encode_row(row)})" for row in rows]
   inserted_rows = ','.join(rows_as_tuples)
   cols = ','.join(columns)
   return f"""
@@ -200,7 +200,7 @@ def post_keystrokes(batch: KeystrokesBatch, request: Request, userId: str, x_use
 
 @app.get("/api/events/{userId}/statistics")
 def get_events_statistics(userId: str, interval: str = '1 hour', offset_count: int = 0, db = Depends(database)):
-  offset = ' '.join(["- INTERVAL '{interval}"] * offset_count) 
+  offset = ' '.join([f"- INTERVAL '{interval}'"] * offset_count) 
   data = db.query(f"""
     with user_keyevents as (
       select * from keyevents where user_id='{userId}'
