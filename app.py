@@ -116,8 +116,8 @@ def database():
   return db
 
 class KeyEvent(BaseModel):
-  record_time: datetime 
-  #ingestion_time: datetime written by route handler 
+  record_time: datetime
+  #ingestion_time: datetime written by route handler
   #batch_id: alternative to ingestion_time - same semantics
   #user_id: str comes from
   #agent_description: str
@@ -185,17 +185,6 @@ async def authorize_request(request: Request, call_next):
     response.headers[h] = cors_headers[h]
   return response
 
-class EventsQuery(BaseModel):
-  page_size: Optional[int] 
-  sql: str
-
-@app.post("/api/events/query")
-def post_events_query(query: EventsQuery, x_user_id: str = Header(default=None), db = Depends(database)):
-  data = db.query(query.sql)
-  return {
-    'data': data
-  }
-
 @app.post("/api/events/{userId}")
 def post_keystrokes(batch: KeystrokesBatch, request: Request, userId: str, x_user_id: str = Header(default=None), db = Depends(database)):
   batch = batch.dict()
@@ -209,11 +198,89 @@ def post_keystrokes(batch: KeystrokesBatch, request: Request, userId: str, x_use
     event["agent_description"] = agent_description(request)
   db.insert(EVENTS_TABLE, batch["events"])
 
-@app.get("/api/events")
-def get_keystrokes(request: Request, db = Depends(database)):
-  return db.query(f"""
-    select * from {EVENTS_TABLE}
+@app.get("/api/events/{userId}/statistics")
+def get_events_statistics(userId: str, interval: str = '1 hour', db = Depends(database)):
+  data = db.query(f"""
+    with user_keyevents as (
+      select * from keyevents where user_id={userId}
+    ), last_hour_events as (
+        select 
+            * 
+        from user_keyevents 
+        where 
+          record_time > NOW() - INTERVAL '${interval}'
+    ), word_count as (
+        select 
+            count(*) as word_count
+        from last_hour_events 
+        where is_end_of_word is true or is_end_of_line is true 
+    ),
+    returns_count as (
+        select
+            count(*) as error_count
+        from last_hour_events
+        where is_return is true
+    ),
+    total_count as (
+        select
+            count(*) as total_count
+        from last_hour_events
+    )
+    select 
+        total_count,
+        error_count,
+        word_count
+    from word_count, returns_count, total_count
   """)
+  return {
+    'data': data
+  }
+
+@app.get("/api/events/{userId}/analytics/time-of-day")
+def get_events_statistics(userId: str, interval: str = '1 hour', db = Depends(database)):
+  data = db.query(f"""
+    with user_keyevents as (
+      select * from keyevents where user_id={userId}
+    ), bucketed as (
+        select 
+          date_bin(
+              '15 minutes', 
+              record_time, 
+              date_trunc('day', record_time) 
+          ) as trunc,
+          date_trunc('day', record_time) as day
+        from user_keyevents 
+        where 
+          record_time > NOW() - INTERVAL '${interval}'
+    ), strokes_times as (
+        select 
+          extract('hour' from trunc)::smallint as hour,
+          extract('minute' from trunc)::smallint as minute,
+          day
+        from bucketed
+    ), final_form as (
+        select
+            day,
+            hour,
+            minute,
+            count(*) as strokes_count
+        from strokes_times REF
+        group by day, hour, minute
+        order by day, hour, minute asc
+    ), averaged as (
+        select 
+            hour, minute, avg(strokes_count) as strokes_count
+        from final_form
+        group by hour, minute
+    ) select 
+        hour, minute, --lpad(hour::text, 2, '0')|| ':' || lpad(minute::text, 2, '0'), 
+        strokes_count 
+    from averaged 
+    order by hour, minute
+  """)
+  return {
+    'data': data
+  }
 
 @app.get("/api/events/count")
 def get_keystrokes(request: Request, db = Depends(database)):
@@ -223,4 +290,4 @@ def get_keystrokes(request: Request, db = Depends(database)):
 
 @app.get("/api/version")
 def get_version(db = Depends(database)):
-  return "0.0.1"
+  return "0.2.0"
