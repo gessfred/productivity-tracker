@@ -199,7 +199,8 @@ def post_keystrokes(batch: KeystrokesBatch, request: Request, userId: str, x_use
   db.insert(EVENTS_TABLE, batch["events"])
 
 @app.get("/api/events/{userId}/statistics")
-def get_events_statistics(userId: str, interval: str = '1 hour', db = Depends(database)):
+def get_events_statistics(userId: str, interval: str = '1 hour', offset_count: int = 0, db = Depends(database)):
+  offset = ' '.join(["- INTERVAL '{interval}"] * offset_count) 
   data = db.query(f"""
     with user_keyevents as (
       select * from keyevents where user_id={userId}
@@ -208,7 +209,8 @@ def get_events_statistics(userId: str, interval: str = '1 hour', db = Depends(da
             * 
         from user_keyevents 
         where 
-          record_time > NOW() - INTERVAL '${interval}'
+          record_time > NOW() - INTERVAL '{interval}' ${offset} and
+          record_time <= NOW() ${offset}
     ), word_count as (
         select 
             count(*) as word_count
