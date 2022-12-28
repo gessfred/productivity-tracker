@@ -203,14 +203,14 @@ def get_events_statistics(userId: str, interval: str = '1 hour', offset_count: i
   offset = ' '.join(["- INTERVAL '{interval}"] * offset_count) 
   data = db.query(f"""
     with user_keyevents as (
-      select * from keyevents where user_id={userId}
+      select * from keyevents where user_id='{userId}'
     ), last_hour_events as (
         select 
             * 
         from user_keyevents 
         where 
           record_time > NOW() - INTERVAL '{interval}' {offset} and
-          record_time <= NOW() ${offset}
+          record_time <= NOW() {offset}
     ), word_count as (
         select 
             count(*) as word_count
@@ -238,11 +238,12 @@ def get_events_statistics(userId: str, interval: str = '1 hour', offset_count: i
     'data': data
   }
 
+#TODO add weeks offset
 @app.get("/api/events/{userId}/analytics/time-of-day")
 def get_events_statistics(userId: str, interval: str = '1 hour', db = Depends(database)):
   data = db.query(f"""
     with user_keyevents as (
-      select * from keyevents where user_id={userId}
+      select * from keyevents where user_id='{userId}'
     ), bucketed as (
         select 
           date_bin(
