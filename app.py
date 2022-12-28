@@ -96,7 +96,7 @@ class Database:
     cur = connection.cursor()
     res = None
     try:
-      cur.execute(sql, args)
+      cur.execute(sql, *args)
       res = cur.fetchall()
     finally:
       cur.close()
@@ -203,14 +203,14 @@ def get_events_statistics(userId: str, interval: str = '1 hour', offset_count: i
   offset = ' '.join([f"- INTERVAL '{interval}'"] * offset_count) 
   data = db.query(f"""
     with user_keyevents as (
-      select * from keyevents where user_id='{userId}'
+      select * from keyevents where user_id='%s'
     ), last_hour_events as (
         select 
             * 
         from user_keyevents 
         where 
-          record_time > NOW() - INTERVAL '{interval}' {offset} and
-          record_time <= NOW() {offset}
+          record_time > NOW() - INTERVAL '%s' %s and
+          record_time <= NOW() %s
     ), word_count as (
         select 
             count(*) as word_count
@@ -233,7 +233,7 @@ def get_events_statistics(userId: str, interval: str = '1 hour', offset_count: i
         error_count,
         word_count
     from word_count, returns_count, total_count
-  """)
+  """, (userId, interval, offset, offset))
   return {
     'data': data
   }
@@ -243,7 +243,7 @@ def get_events_statistics(userId: str, interval: str = '1 hour', offset_count: i
 def get_events_statistics(userId: str, interval: str = '1 hour', db = Depends(database)):
   data = db.query(f"""
     with user_keyevents as (
-      select * from keyevents where user_id='{userId}'
+      select * from keyevents where user_id='%s'
     ), bucketed as (
         select 
           date_bin(
@@ -254,7 +254,7 @@ def get_events_statistics(userId: str, interval: str = '1 hour', db = Depends(da
           date_trunc('day', record_time) as day
         from user_keyevents 
         where 
-          record_time > NOW() - INTERVAL '{interval}'
+          record_time > NOW() - INTERVAL '%s'
     ), strokes_times as (
         select 
           extract('hour' from trunc)::smallint as hour,
@@ -280,6 +280,26 @@ def get_events_statistics(userId: str, interval: str = '1 hour', db = Depends(da
         strokes_count 
     from averaged 
     order by hour, minute
+  """, (userId, interval))
+  return {
+    'data': data
+  }
+
+@app.get("/api/events/{userId}/analytics/day-of-week")
+def get_events_statistics(userId: str, date_predicate: str = '', db = Depends(database)):
+  if date_predicate != "":
+    #TODO avoid SQL injection here
+    date_predicate = f"and record_time {date_predicate}"
+  data = db.query(f"""
+    with user_keyevents as (
+      select * from keyevents where user_id='{userId}' {date_predicate}
+    )
+    select 
+        to_char(record_time, 'Day'),
+        count(*)
+    from user_keyevents
+    group by to_char(record_time, 'Day'), extract(dow from record_time)
+    order by extract(dow from record_time)
   """)
   return {
     'data': data
