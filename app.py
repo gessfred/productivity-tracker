@@ -287,13 +287,10 @@ def get_events_statistics(userId: str, interval: str = '1 hour', db = Depends(da
   }
 
 @app.get("/api/events/{userId}/analytics/day-of-week")
-def get_events_statistics(userId: str, date_predicate: str = '', db = Depends(database)):
-  if date_predicate != "":
-    #TODO avoid SQL injection here
-    date_predicate = f"and record_time {date_predicate}"
+def get_events_statistics(userId: str, db = Depends(database)):
   data = db.query(f"""
     with user_keyevents as (
-      select * from keyevents where user_id='{userId}' {date_predicate}
+      select * from keyevents where user_id=%s
     )
     select 
         to_char(record_time, 'Day'),
@@ -301,7 +298,26 @@ def get_events_statistics(userId: str, date_predicate: str = '', db = Depends(da
     from user_keyevents
     group by to_char(record_time, 'Day'), extract(dow from record_time)
     order by extract(dow from record_time)
-  """)
+  """, (userId,))
+  return {
+    'data': data
+  }
+
+@app.get("/api/events/{userId}/analytics/top-sites")
+def get_events_statistics(userId: str, db = Depends(database)):
+  data = db.query(f"""
+    with keyevents as (
+        select 
+            (regexp_matches(source_url, '^(?:https?:\/\/)?(?:[^@\/\n]+@)?([^:\/\n]+)', 'g'))[1] as url,
+            *
+        from keyevents where user_id=%s
+    )
+    select 
+        url, count(*) 
+    from keyevents
+    group by url
+    order by count(*) desc
+  """, (userId,))
   return {
     'data': data
   }
