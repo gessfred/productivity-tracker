@@ -200,17 +200,18 @@ def post_keystrokes(batch: KeystrokesBatch, request: Request, userId: str, x_use
 
 @app.get("/api/events/{userId}/statistics")
 def get_events_statistics(userId: str, interval: str = '1 hour', offset_count: int = 0, db = Depends(database)):
+  #No SQL injection possible as the type is enforced...
   offset = ' '.join([f"- INTERVAL '{interval}'"] * offset_count) 
   data = db.query(f"""
     with user_keyevents as (
-      select * from keyevents where user_id='%s'
+      select * from keyevents where user_id=%s
     ), last_hour_events as (
         select 
             * 
         from user_keyevents 
         where 
-          record_time > NOW() - INTERVAL '%s' %s and
-          record_time <= NOW() %s
+          record_time > NOW() - INTERVAL %s {offset} and
+          record_time <= NOW() {offset}
     ), word_count as (
         select 
             count(*) as word_count
@@ -233,7 +234,7 @@ def get_events_statistics(userId: str, interval: str = '1 hour', offset_count: i
         error_count,
         word_count
     from word_count, returns_count, total_count
-  """, (userId, interval, offset, offset))
+  """, (userId, interval))
   return {
     'data': data
   }
@@ -243,7 +244,7 @@ def get_events_statistics(userId: str, interval: str = '1 hour', offset_count: i
 def get_events_statistics(userId: str, interval: str = '1 hour', db = Depends(database)):
   data = db.query(f"""
     with user_keyevents as (
-      select * from keyevents where user_id='%s'
+      select * from keyevents where user_id=%s
     ), bucketed as (
         select 
           date_bin(
@@ -254,7 +255,7 @@ def get_events_statistics(userId: str, interval: str = '1 hour', db = Depends(da
           date_trunc('day', record_time) as day
         from user_keyevents 
         where 
-          record_time > NOW() - INTERVAL '%s'
+          record_time > NOW() - INTERVAL %s
     ), strokes_times as (
         select 
           extract('hour' from trunc)::smallint as hour,
