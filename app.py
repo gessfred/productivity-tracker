@@ -209,7 +209,7 @@ def get_events_statistics(userId: str, interval: str = '1 hour', offset_count: i
             * 
         from user_keyevents 
         where 
-          record_time > NOW() - INTERVAL '{interval}' ${offset} and
+          record_time > NOW() - INTERVAL '{interval}' {offset} and
           record_time <= NOW() ${offset}
     ), word_count as (
         select 
@@ -253,7 +253,7 @@ def get_events_statistics(userId: str, interval: str = '1 hour', db = Depends(da
           date_trunc('day', record_time) as day
         from user_keyevents 
         where 
-          record_time > NOW() - INTERVAL '${interval}'
+          record_time > NOW() - INTERVAL '{interval}'
     ), strokes_times as (
         select 
           extract('hour' from trunc)::smallint as hour,
