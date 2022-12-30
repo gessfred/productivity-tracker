@@ -66,7 +66,8 @@ class Database:
       "source_url": "text",
       "is_end_of_word": "boolean",
       "is_end_of_line": "boolean",
-      "is_return": "boolean"
+      "is_return": "boolean",
+      "tags": "text[]"
     }
     sql = create_table(EVENTS_TABLE, self.tables[EVENTS_TABLE])
     print("SQL Create Table", sql)
@@ -126,6 +127,7 @@ class KeyEvent(BaseModel):
   is_end_of_word: bool
   is_end_of_line: bool
   is_return: bool
+  tags: List[str]
 
 class KeystrokesBatch(BaseModel):
   events: List[KeyEvent]
@@ -145,18 +147,13 @@ async def authorize_request(request: Request, call_next):
       Will look first for a Bearer authorization header, which is the preferred method,
       but if not found will look for a cookie. This allows authorization for server sent events.
   """
-  """if "Referer" not in request.headers:
-    return JSONResponse(
-      status_code=401, 
-      content={'detail': "Referer header must be set"}
-    )"""
   origin = request.headers.get("Referer", "localhost")
   if origin.endswith("/"): origin = origin[:-1]
   cors_headers = {
-    "Access-Control-Allow-Methods": "GET, POST, DELETE, PUT, OPTIONS", 
-    "Access-Control-Allow-Credentials": "true", 
+    "Access-Control-Allow-Methods": "GET, POST, DELETE, PUT, OPTIONS",
+    "Access-Control-Allow-Credentials": "true",
     "Access-Control-Allow-Origin": origin,
-    "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept, Authorization", 
+    "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept, Authorization",
     "Access-Control-Max-Age": "86400"
   }
   if request.method == "OPTIONS":
@@ -164,16 +161,10 @@ async def authorize_request(request: Request, call_next):
       print(origin, "not in allowed origins")
       return PlainTextResponse("CORS error", status_code=401)"""
     return PlainTextResponse(
-      "OK", 
-      status_code=200, 
+      "OK",
+      status_code=200,
       headers=cors_headers
     )
-  """ if 'Authorization' not in request.headers:
-    return JSONResponse(status_code=401, content={'detail': "No credentials found (authorization bearer or cookie)"})
-  token = decode_auth_header(request.headers['Authorization'])
-  payload = get_token_payload(token)
-  if 'https://api.amiscan.xyz/' not in payload['aud']:
-    raise Exception("unauthorized")"""
 
   headers = MutableHeaders(request._headers)
   headers["X-User-Id"] = "alice@test"#payload.get("sub", None)
