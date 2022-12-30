@@ -24,6 +24,8 @@ def insert(table: str, rows: List[dict], columns: List[str]):
       return 'null'
     elif type(col) == bool:
       return 'true' if col else 'false'
+    elif type(col) == list:
+      return "array[" + ','.join([f"'{str(el)}'" for el in col]) + "]"
     else:
       return f"'{str(col)}'"
   def encode_row(row: dict):
