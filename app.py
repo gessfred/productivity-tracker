@@ -127,7 +127,7 @@ class KeyEvent(BaseModel):
   is_end_of_word: bool
   is_end_of_line: bool
   is_return: bool
-  tags: List[str]
+  tags: Optional[List[str]]
 
 class KeystrokesBatch(BaseModel):
   events: List[KeyEvent]
