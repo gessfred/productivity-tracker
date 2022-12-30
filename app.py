@@ -241,14 +241,14 @@ def get_events_statistics(userId: str, interval: str = '1 hour', offset_count: i
 
 #TODO add weeks offset
 @app.get("/api/events/{userId}/analytics/time-of-day")
-def get_events_statistics(userId: str, interval: str = '1 hour', db = Depends(database)):
+def get_events_statistics(userId: str, interval: str = '1 hour', bucket_width='15 minutes', db = Depends(database)):
   data = db.query(f"""
     with user_keyevents as (
       select * from keyevents where user_id=%s
     ), bucketed as (
         select 
           date_bin(
-              '15 minutes', 
+              %s, 
               record_time, 
               date_trunc('day', record_time) 
           ) as trunc,
@@ -281,7 +281,7 @@ def get_events_statistics(userId: str, interval: str = '1 hour', db = Depends(da
         strokes_count 
     from averaged 
     order by hour, minute
-  """, (userId, interval))
+  """, (userId, bucket_width, interval))
   return {
     'data': data
   }
