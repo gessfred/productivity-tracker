@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends, Request, Header
 from fastapi.responses import JSONResponse, PlainTextResponse
 from pydantic import BaseModel
-from psycopg2 import pool
+from psycopg2 import pool, sql
 from typing import List, Any, Tuple, Dict, Optional
 import os
 from datetime import datetime
@@ -193,7 +193,7 @@ def post_keystrokes(batch: KeystrokesBatch, request: Request, userId: str, x_use
 
 @app.get("/api/events/{userId}/statistics")
 def get_events_statistics(userId: str, interval: str = '1 hour', offset_count: int = 0, db = Depends(database)):
-  #No SQL injection possible as the type is enforced...
+  #No SQL injection possible as the type is enforced... actually yes, as interval string can be bad #TODO fix urgently
   offset = ' '.join([f"- INTERVAL '{interval}'"] * offset_count) 
   data = db.query(f"""
     with user_keyevents as (
@@ -237,7 +237,10 @@ def get_events_statistics(userId: str, interval: str = '1 hour', offset_count: i
 def get_events_statistics(userId: str, interval: str = '1 hour', bucket_width='15 minutes', db = Depends(database)):
   data = db.query(f"""
     with user_keyevents as (
-      select * from keyevents where user_id=%s
+      select * from keyevents
+      where 
+        user_id=%s and 
+        record_time > now() - interval %s
     ), bucketed as (
         select 
           date_bin(
@@ -280,10 +283,10 @@ def get_events_statistics(userId: str, interval: str = '1 hour', bucket_width='1
   }
 
 @app.get("/api/events/{userId}/analytics/day-of-week")
-def get_events_statistics(userId: str, db = Depends(database)):
+def get_events_statistics(userId: str, interval='1 month', db = Depends(database)):
   data = db.query(f"""
     with user_keyevents as (
-      select * from keyevents where user_id=%s
+      select * from keyevents where user_id=%s  and record_time > now() - interval %s
     )
     select 
         to_char(record_time, 'Day'),
@@ -291,26 +294,29 @@ def get_events_statistics(userId: str, db = Depends(database)):
     from user_keyevents
     group by to_char(record_time, 'Day'), extract(dow from record_time)
     order by extract(dow from record_time)
-  """, (userId,))
+  """, (userId,interval))
   return {
     'data': data
   }
 
 @app.get("/api/events/{userId}/analytics/top-sites")
-def get_events_statistics(userId: str, db = Depends(database)):
+def get_events_statistics(userId: str, interval='1 month', db = Depends(database)):
   data = db.query(f"""
     with keyevents as (
         select 
             (regexp_matches(source_url, '^(?:https?:\/\/)?(?:[^@\/\n]+@)?([^:\/\n]+)', 'g'))[1] as url,
             *
-        from keyevents where user_id=%s
+        from keyevents 
+        where 
+          user_id=%s and 
+          record_time > now() - interval %s
     )
     select 
         url, count(*) 
     from keyevents
     group by url
     order by count(*) desc
-  """, (userId,))
+  """, (userId,interval))
   return {
     'data': data
   }
