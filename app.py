@@ -250,8 +250,6 @@ def get_events_statistics(userId: str, interval: str = '1 hour', bucket_width='1
           ) as trunc,
           date_trunc('day', record_time) as day
         from user_keyevents 
-        where 
-          record_time > NOW() - INTERVAL %s
     ), strokes_times as (
         select 
           extract('hour' from trunc)::smallint as hour,
@@ -277,7 +275,7 @@ def get_events_statistics(userId: str, interval: str = '1 hour', bucket_width='1
         strokes_count 
     from averaged 
     order by hour, minute
-  """, (userId, bucket_width, interval))
+  """, (userId, interval, bucket_width))
   return {
     'data': data
   }
