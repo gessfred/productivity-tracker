@@ -31,6 +31,7 @@ jobs:
       uses: digitalocean/action-doctl@v2.3.0
       with:
         token: ${{ secrets.DIGITAL_OCEAN_TOKEN }}
+        version: 1.91.0
     # - run: sudo snap install doctl
     # - run: sudo snap connect doctl:kube-config
     # - run: sudo ls /home/runner/
