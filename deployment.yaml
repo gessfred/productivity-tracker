@@ -57,10 +57,10 @@ metadata:
 spec:
   tls:
   - hosts:
-    - prosco.gessfred.xyz
+    - keylogg.gessfred.xyz
     secretName: keybored-tls-cert-secret
   rules:
-  - host: prosco.gessfred.xyz
+  - host: keylogg.gessfred.xyz
     http:
       paths:
       - pathType: Prefix
