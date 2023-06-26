@@ -107,7 +107,7 @@ class Database:
     return res
 
 db = Database(
-  host="104.248.24.146",#os.getenv("DB_HOST"),
+  host="db-postgresql-fra1-33436-do-user-6069962-0.b.db.ondigitalocean.com",#os.getenv("DB_HOST"),
   port=os.getenv("DB_PORT"),
   user=os.getenv("DB_USER"),
   password=os.getenv("DB_PASSWORD"),
