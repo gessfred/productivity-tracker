@@ -149,7 +149,7 @@ async def authorize_request(request: Request, call_next):
       Will look first for a Bearer authorization header, which is the preferred method,
       but if not found will look for a cookie. This allows authorization for server sent events.
   """
-  origin = request.headers.get("Referer", "localhost")
+  origin = request.headers.get("Referer", "*")
   if origin.endswith("/"): origin = origin[:-1]
   cors_headers = {
     "Access-Control-Allow-Methods": "GET, POST, DELETE, PUT, OPTIONS",
