@@ -17,9 +17,9 @@ jobs:
     - run: echo ${{ secrets.REGISTRY_TOKEN }} | docker login ghcr.io -u USERNAME --password-stdin
     - run: echo "ENV VERSION=$GITHUB_SHA" >> ./Dockerfile
     - name: Build the Docker image
-      run: docker build ./ --file ./Dockerfile --tag ghcr.io/gessfred/keybored-api:$GITHUB_SHA
+      run: docker build ./api --file ./api/Dockerfile --tag ghcr.io/gessfred/keybored-api:$GITHUB_SHA
     - run: docker push ghcr.io/gessfred/keybored-api:$GITHUB_SHA
-    - run: docker build ./ --file ./Dockerfile --tag ghcr.io/gessfred/keybored-api:latest
+    - run: docker build ./api --file ./api/Dockerfile --tag ghcr.io/gessfred/keybored-api:latest
     - run: docker push ghcr.io/gessfred/keybored-api:latest
 
   deploy:
@@ -46,8 +46,8 @@ jobs:
     - run: sudo mkdir /root/.kube
     #- run: sudo ls -al /root/.kube
     - run: sudo /opt/hostedtoolcache/doctl/1.91.0/x64/doctl kubernetes cluster kubeconfig save k8s-amiscan-1-22-7-do-0-fra1-1648193990670
-    - run: sed -i "s/:latest/:${GITHUB_SHA}/g" ./deployment.yaml
+    - run: sed -i "s/:latest/:${GITHUB_SHA}/g" ./api/deployment.yaml
     - run: sudo kubectl config get-contexts
     - run: sudo kubectl config use-context do-fra1-k8s-amiscan-1-22-7-do-0-fra1-1648193990670
-    - run: sudo kubectl apply -f deployment.yaml
+    - run: sudo kubectl apply -f ./api/deployment.yaml
       name: Shipping... 

@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: keylogg-client-nginx-svc
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    app: keylogg-web
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keylogg-web
+spec:
+  selector:
+    matchLabels:
+      app: keylogg-web
+  template:
+    metadata:
+      labels:
+        app: keylogg-web
+    spec:
+      containers:
+      - name: keylogg-web
+        image: ghcr.io/gessfred/keylogg-web:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+        env:
+        - name: HTTP_PORT
+          value: '80'
+      imagePullSecrets:
+      - name: github-regcred
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: keylogg-client-nginx-ing
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  tls:
+  - hosts:
+    - keylogg.gessfred.xyz
+    secretName: keylogg-client-nginx-tls-cert
+  rules:
+  - host: "keylogg.gessfred.xyz"
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: keylogg-client-nginx-svc
+            port:
+              number: 80

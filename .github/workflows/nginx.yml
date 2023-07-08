@@ -1,0 +1,37 @@
+name: Build and Deploy web client
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'web/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - run: docker build -t ghcr.io/gessfred/keylogg-web:latest ./web
+      - run: docker build -t "ghcr.io/gessfred/keylogg-web:${GITHUB_SHA}" ./web
+      - run: echo ${{ secrets.REGISTRY_TOKEN }} | docker login ghcr.io -u USERNAME --password-stdin
+      - run: docker push ghcr.io/gessfred/keylogg-web:latest
+      - run: docker push "ghcr.io/gessfred/keylogg-web:${GITHUB_SHA}"
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps: 
+    - uses: actions/checkout@v3
+    - name: Install doctl
+      uses: digitalocean/action-doctl@v2.3.0
+      with:
+        token: ${{ secrets.DIGITAL_OCEAN_TOKEN }}
+        version: "1.84.0"
+    - run: sudo mkdir /root/.kube
+    - run: ls /opt/hostedtoolcache/doctl
+    - run: /opt/hostedtoolcache/doctl/1.84.0/x64/doctl kubernetes cluster kubeconfig save k8s-amiscan-1-22-7-do-0-fra1-1648193990670
+    - run: sed -i "s/:latest/:${GITHUB_SHA}/g" ./web/nginx.yml
+    - run: kubectl config get-contexts
+    - run: kubectl config use-context do-fra1-k8s-amiscan-1-22-7-do-0-fra1-1648193990670
+    - run: kubectl apply -f ./web/nginx.yml
