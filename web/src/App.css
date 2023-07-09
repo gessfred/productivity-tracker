@@ -3,7 +3,7 @@
 }
 
 
-svg {
+.background {
   position: absolute;
   top: 0;
   left: 0;
@@ -33,9 +33,52 @@ svg {
   font-weight: bold;
 }
 
-button {
+.landing-page-action-item {
   padding: 12px;
   border: none;
   border-radius: 8px;
+  background-color: white;
   cursor: pointer;
+  font-size: 18px;
+  text-decoration: none;
+  color: black;
+  font-weight: normal;
+  margin: 16px;
 }
+
+.landing-card-container {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  background-color: rgba(215, 249, 242, 0.1);
+  padding: 16px;
+  border-radius: 16px;
+  width: 1000px;
+  margin: 16px;
+  backdrop-filter: blur(200px);
+  box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+}
+
+.landing-card-caption {
+  font-size: 32px;
+}
+
+.landing-page-artifact {
+    transform-style: preserve-3d;
+    transform: rotateX(60deg) rotateZ(20deg);
+}
+
+.landing-card-content-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.landing-card-content-container, span {
+  font-size: 24px;
+}
+
+.landing-page-motto {
+  font-size: 48px;
+}
+
