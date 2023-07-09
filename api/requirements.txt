@@ -1,3 +1,4 @@
+pydantic==1.9.*
 psycopg2-binary
 fastapi[all]
 uvicorn

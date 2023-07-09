@@ -62,7 +62,7 @@ function LandingPage({show}) {
       <LandingBackground />
       <BlurOverlay>
         <span>Keylogg</span>
-        <span>Get the best from yourself</span>
+        <span>Maximise productivity</span>
         <button onClick={() => loginWithRedirect()}>Log In</button>
       </BlurOverlay>
     </div>
