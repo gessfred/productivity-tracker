@@ -5,3 +5,4 @@ RUN pip3 install -r requirements.txt
 COPY app.py main.py ./
 
 ENTRYPOINT ["python3", "main.py"]
+# apk add python3 py3-pip
