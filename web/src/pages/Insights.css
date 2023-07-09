@@ -1,0 +1,14 @@
+#insights-feed {
+  width: 60%;
+  
+}
+
+#insights-lang-request {
+  background: none;
+  border: white 1px solid;
+  font-size: 22px;
+  padding: 8px 12px;
+  color: white;
+  border-radius: 8px;
+  width: 60%;
+}

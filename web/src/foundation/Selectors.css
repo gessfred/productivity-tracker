@@ -1,0 +1,24 @@
+.bar-selector-container {
+  background-color: white;
+  border-radius: 8px;
+  padding: 8px;
+  margin: 2px;
+}
+
+.bar-selector-choice-active, .bar-selector-choice {
+  font-size: 15px;
+  font-weight: lighter;
+  margin: 4px;
+  cursor: pointer;
+}
+
+.bar-selector-choice {
+  color: gray;
+}
+
+.bar-selector-choice-active {
+  background-color: gray;
+  color: white;
+  padding: 4px;
+  border-radius: 8px;
+}

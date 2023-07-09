@@ -2,46 +2,9 @@ import { useState, useEffect } from 'react'
 import { useAuth0 } from '@auth0/auth0-react'
 import { BlurOverlay } from '../foundation/Overlays'
 import './LandingPage.css'
+import { Background } from '../foundation/Backgrounds'
 
-function getWindowDimensions() {
-  const { innerWidth: width, innerHeight: height } = window;
-  return {
-      width,
-      height
-  };
-}
-function useWindowDimensions() {
-  const [windowDimensions, setWindowDimensions] = useState(getWindowDimensions());
-  useEffect(() => {
-      function handleResize() {
-          setWindowDimensions(getWindowDimensions());
-      }
-      window.addEventListener('resize', handleResize);
-      return () => window.removeEventListener('resize', handleResize);
-  }, []);
-  return windowDimensions;
-}
-function getRandomInt(min, max) {
-  min = Math.ceil(min);
-  max = Math.floor(max);
-  return Math.floor(Math.random() * (max - min) + min); // The maximum is exclusive and the minimum is inclusive
-}
 
-function LandingBackground({}) {
-  const { width, height } = useWindowDimensions()
-  const colors = ['#C0B8DF', '#F9FB95', '#FBBC95']
-  return (
-    <svg className='background' xmlns="http://www.w3.org/2000/svg">
-      {[...Array(10).keys()].map(i => (
-        <circle 
-          cx={getRandomInt(0, width)} 
-          cy={getRandomInt(0, height)} 
-          r={getRandomInt(50, 200)} 
-          fill={colors[getRandomInt(0, 4)]} />
-      ))}
-    </svg>
-  )
-}
 
 function LandingCard({caption, children}) {
   return (
@@ -69,7 +32,7 @@ export function LandingPage({show}) {
   return (
     <div id='landing-page'>
       
-      <LandingBackground />
+      <Background />
       <BlurOverlay>
         <h1>Keylogg</h1>
         <span className='landing-page-motto'>Get the most from yourself</span>
