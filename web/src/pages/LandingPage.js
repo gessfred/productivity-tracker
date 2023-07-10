@@ -37,7 +37,7 @@ export function LandingPage({show}) {
         <h1>Keylogg</h1>
         <span className='landing-page-motto'>Get the most from yourself</span>
         <div>
-          <a className='landing-page-action-item' href='https://gessfred.xyz'>Get the extension</a>
+          <a className='landing-page-action-item' href='https://chrome.google.com/webstore/detail/mindspeed/caboikpoimjoinpcenfhpdabngepgmif'>Get the extension</a>
           <button className='landing-page-action-item' onClick={() => loginWithRedirect()}>Log In</button>
         </div>
         <LandingCard caption="Analysis of typing patterns">
