@@ -4,7 +4,7 @@ with type_intervals as (
     session_id,
     record_time,
     lead(record_time) over (
-      partition by session_id
+      partition by source_url, session_id
       order by record_time asc
     ) - record_time  as interval_to_next_event
   from keyevents 
@@ -44,12 +44,12 @@ stats_by_flow as (
   
 )
 select 
-  avg(avg_type_speed) as speed,
+  sum(avg_type_speed * event_count) / sum(event_count) as speed, -- weighted average
   coalesce(
     stddev(avg_type_speed),
     0
   ) as volatility,
   sum(event_count) as event_count
 from stats_by_flow
-where event_count > 2
+where event_count > 1
 order by speed asc

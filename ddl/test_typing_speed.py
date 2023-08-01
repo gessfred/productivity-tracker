@@ -6,10 +6,10 @@ from datetime import timedelta
 with open("typing_speed.sql") as fd:
     query = fd.read()
 
-def make_event(t):
+def make_event(t, source_url="example.com", session_id="1"):
     return {
-        "session_id": "1",
-        "source_url": "example.com",
+        "session_id": session_id,
+        "source_url": source_url,
         "record_time": t
     }
 
@@ -30,7 +30,19 @@ def test_empty_case_returns_zeros():
     assert res.speed.isna().all()
 
 def test_domains_are_seggregated():
-    pass
+    now = dt.now()
+    keyevents = pd.DataFrame([
+        make_event(now ), 
+        make_event(now - timedelta(milliseconds=5)), 
+        make_event(now - timedelta(milliseconds=10)), 
+        # if domains are not seggreagated, 
+        make_event(now - timedelta(milliseconds=50), source_url="google.com"),
+        make_event(now - timedelta(milliseconds=55), source_url="google.com"), 
+        make_event(now - timedelta(milliseconds=60), source_url="google.com"), 
+    ])
+    res = duckdb.sql(query).df()
+    assert len(res) == 1
+    assert res.speed.values[0] == 5
 
 def test_intervals_are_ignored():
     now = dt.now()
@@ -48,7 +60,16 @@ def test_intervals_are_ignored():
     assert res.speed.values[0] == 5
 
 def test_weight_is_accounted_per_flow():
-    pass# 
+    now = dt.now()
+    keyevents = pd.DataFrame((
+        [ make_event(now - timedelta(milliseconds=k * 3)) for k in range (10)] + 
+        [ make_event(now - timedelta(milliseconds=k * 8 + 55), source_url="google.com") for k in range (30)]
+    ))
+    res = duckdb.sql(query).df()
+    assert len(res) == 1
+    expected = 0.25 * 3 + 0.75 * 8
+    assert res.speed.values[0] == expected
+    #assert res.speed.values[0] == 5
 
 def test_weight_is_accounted_across():
     pass
