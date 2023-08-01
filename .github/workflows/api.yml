@@ -22,6 +22,9 @@ jobs:
     - run: docker build ./api --file ./api/Dockerfile --tag ghcr.io/gessfred/keybored-api:latest
     - run: docker push ghcr.io/gessfred/keybored-api:latest
 
+  test:
+    runs-on: ubuntu-latest
+
   deploy:
     needs: build
     runs-on: ubuntu-latest
