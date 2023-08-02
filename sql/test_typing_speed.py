@@ -3,14 +3,15 @@ import pandas as pd
 from datetime import datetime as dt
 from datetime import timedelta
 
-with open("typing_speed.sql") as fd:
+with open("typing_speed_current.sql") as fd:
     query = fd.read()
 
-def make_event(t, source_url="example.com", session_id="1"):
+def make_event(t, source_url="example.com", session_id="1", is_error=False):
     return {
         "session_id": session_id,
         "source_url": source_url,
-        "record_time": t
+        "record_time": t,
+        "is_return": is_error
     }
 
 def make_events(*ts):
@@ -18,7 +19,7 @@ def make_events(*ts):
 
 def test_empty_case_returns_zeros():
     keyevents = pd.DataFrame([
-        {"record_time": dt(2000, 1, 1, 0, 0), "source_url": "example.com", "session_id": "1"}
+        make_event(dt(2000, 1, 1, 0, 0))
     ])
     res = duckdb.sql(query).df()
 
