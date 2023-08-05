@@ -1,12 +1,9 @@
-with time_windows as (
-  select 
-      w as window_start
-  from 
-    generate_series(
-      now() - interval '6 hours',
-      now(),
-      interval '15 minutes'
-    ) as w
+with recursive time_windows as (
+    select now() - interval '6 hours' as window_start
+    union all
+    select window_start + interval '15 minutes'
+    from time_windows
+    where window_start + interval '15 minutes' <= now()
 ),
 type_intervals as (
   select 
