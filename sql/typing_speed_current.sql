@@ -1,12 +1,12 @@
 with time_windows as (
   select 
-      generate_series as window_start
+      w as window_start
   from 
     generate_series(
       now() - interval '6 hours',
       now(),
       interval '15 minutes'
-    ) as window_start
+    ) as w
 ),
 type_intervals as (
   select 
