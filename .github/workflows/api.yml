@@ -25,6 +25,12 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    steps:
+    - uses: actions/checkout@v3
+    - run: pip install pytest
+    - run: cd sql
+    - run: pytest
+
   deploy:
     needs: build
     runs-on: ubuntu-latest
