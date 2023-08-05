@@ -24,15 +24,16 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
-
+    needs: build
     steps:
     - uses: actions/checkout@v3
     - run: pip install pytest
-    - run: cd sql
-    - run: pytest
+    - run: |
+        cd sql
+        pytest
 
   deploy:
-    needs: build
+    needs: test
     runs-on: ubuntu-latest
     steps: 
     - uses: actions/checkout@v3
