@@ -325,6 +325,12 @@ def get_keystrokes(request: Request, db = Depends(database)):
     "count": db.query(f"SELECT COUNT(*) FROM {EVENTS_TABLE}")[0][0]
   }
 
+@app.get("/api/stats/typing/{userId}")
+def get_typing_speed_current(userId: str, db = Depends(database)):
+  return {
+    "stats": db.query("select * from typing_speed_current")
+  }
+
 @app.get("/api/version")
 def get_version(db = Depends(database)):
   return "0.2.0"
