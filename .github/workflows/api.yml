@@ -27,9 +27,9 @@ jobs:
     needs: build
     steps:
     - uses: actions/checkout@v3
-    - run: pip install pytest
     - run: |
         cd sql
+        pip install -r requirements.txt
         pytest
 
   deploy:
