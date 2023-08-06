@@ -27,10 +27,17 @@ jobs:
     needs: build
     steps:
     - uses: actions/checkout@v3
-    - run: |
+    - name: Test SQL queries
+      run: |
         cd sql
         pip install -r requirements.txt
         pytest
+    - name: Test API
+      run: |
+        cd api
+        pip install -r requirements.txt
+        pytest
+      
 
   deploy:
     needs: test
