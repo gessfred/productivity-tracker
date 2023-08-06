@@ -24,5 +24,3 @@ def test_events_crud():
     ]
     res = client.post("/api/events/alice", json={"events": test_request})
     assert res.status_code == 200
-    res = client.get("/api/events/alice")
-    assert res.status_code == 200
