@@ -22,7 +22,7 @@ def test_events_crud():
             "is_return": False
         }
     ]
-    res = client.post("/api/events", json={"events": test_request})
+    res = client.post("/api/events/alice", json={"events": test_request})
     assert res.status_code == 200
-    res = client.get("/api/events")
+    res = client.get("/api/events/alice")
     assert res.status_code == 200
