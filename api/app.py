@@ -106,17 +106,8 @@ class Database:
       self.pool.putconn(connection)
     return res
 
-db = Database(
-  host="db-postgresql-fra1-33436-do-user-6069962-0.b.db.ondigitalocean.com",#os.getenv("DB_HOST"),
-  port=os.getenv("DB_PORT"),
-  user=os.getenv("DB_USER"),
-  password=os.getenv("DB_PASSWORD"),
-  database=os.getenv("DB_NAME")
-)
-
-def database():
-
-  return db
+def database(request: Request = None):
+  return request.app.state.db
 
 class KeyEvent(BaseModel):
   record_time: datetime
@@ -192,7 +183,7 @@ def post_keystrokes(batch: KeystrokesBatch, request: Request, userId: str, x_use
   db.insert(EVENTS_TABLE, batch["events"])
 
 @app.get("/api/events/{userId}/statistics")
-def get_events_statistics(userId: str, interval: str = '1 hour', offset_count: int = 0, db = Depends(database)):
+def get_events_statistics(request: Request, userId: str, interval: str = '1 hour', offset_count: int = 0, db = Depends(database)):
   #No SQL injection possible as the type is enforced... actually yes, as interval string can be bad #TODO fix urgently
   offset = ' '.join([f"- INTERVAL '{interval}'"] * offset_count) 
   data = db.query(f"""
@@ -234,7 +225,7 @@ def get_events_statistics(userId: str, interval: str = '1 hour', offset_count: i
 
 #TODO add weeks offset
 @app.get("/api/events/{userId}/analytics/time-of-day")
-def get_events_statistics(userId: str, interval: str = '1 hour', bucket_width='15 minutes', db = Depends(database)):
+def get_events_statistics(request: Request, userId: str, interval: str = '1 hour', bucket_width='15 minutes', db = Depends(database)):
   data = db.query(f"""
     with user_keyevents as (
       select * from keyevents
@@ -281,7 +272,7 @@ def get_events_statistics(userId: str, interval: str = '1 hour', bucket_width='1
   }
 
 @app.get("/api/events/{userId}/analytics/day-of-week")
-def get_events_statistics(userId: str, interval='1 month', db = Depends(database)):
+def get_events_statistics(request: Request, userId: str, interval='1 month', db = Depends(database)):
   data = db.query(f"""
     with user_keyevents as (
       select * from keyevents where user_id=%s  and record_time > now() - interval %s
@@ -298,7 +289,7 @@ def get_events_statistics(userId: str, interval='1 month', db = Depends(database
   }
 
 @app.get("/api/events/{userId}/analytics/top-sites")
-def get_events_statistics(userId: str, interval='1 month', db = Depends(database)):
+def get_events_statistics(request: Request, userId: str, interval='1 month', db = Depends(database)):
   data = db.query(f"""
     with keyevents as (
         select 
@@ -328,3 +319,13 @@ def get_keystrokes(request: Request, db = Depends(database)):
 @app.get("/api/version")
 def get_version(db = Depends(database)):
   return "0.2.0"
+
+@app.on_event("startup")
+def startup():
+  app.state.db = Database(
+    host="db-postgresql-fra1-33436-do-user-6069962-0.b.db.ondigitalocean.com",#os.getenv("DB_HOST"),
+    port=os.getenv("DB_PORT"),
+    user=os.getenv("DB_USER"),
+    password=os.getenv("DB_PASSWORD"),
+    database=os.getenv("DB_NAME")
+  )
