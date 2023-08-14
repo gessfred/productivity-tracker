@@ -5,6 +5,10 @@ with recursive time_windows as (
     from time_windows
     where window_start + interval '15 minutes' <= now()
 ),
+recent_events as (
+  select * from keyevents 
+  where record_time >= now() - interval '6 hours'
+),
 type_intervals as (
   select 
     window_start,
@@ -16,7 +20,7 @@ type_intervals as (
       order by record_time asc
     ) - record_time  as interval_to_next_event,
     is_return as is_error
-  from keyevents 
+  from recent_events 
   join time_windows on 
     record_time >= window_start and 
     record_time < window_start + interval '15 minutes'
