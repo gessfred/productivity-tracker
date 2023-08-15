@@ -66,7 +66,7 @@ select
   ) as volatility,
   sum(event_count) as event_count,
   sum(error_count) as error_count,
-  error_count / event_count as relative_error
+  sum(error_count) / sum(event_count) as relative_error
 from stats_by_flow
 where event_count > 1
 group by window_start
