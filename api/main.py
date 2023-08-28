@@ -1,18 +1,18 @@
 from fastapi import FastAPI, Depends, Request, Header
-from fastapi.responses import JSONResponse, PlainTextResponse
+
 from pydantic import BaseModel
 from psycopg2 import pool, sql
 from typing import List, Any, Tuple, Dict, Optional
 import os
 from datetime import datetime
 from uuid import uuid4
-from starlette.datastructures import MutableHeaders
 from routers import auth
 from dependencies import get_db, engine
 from models import Base, User
 
 app = FastAPI()
 app.include_router(auth.router)
+app.add_middleware(auth.JWTMiddleware)
 
 def create_table(name: str, table: dict) -> str:
   sep = ',\n'
@@ -135,43 +135,6 @@ def agent_description(request: Request):
   for k in keys:
     data.append(request.headers.get(k, ''))
   return '#'.join(data)
-  
-@app.middleware("http")
-async def authorize_request(request: Request, call_next):
-  """
-      JWT token based authorization.
-
-      Will look first for a Bearer authorization header, which is the preferred method,
-      but if not found will look for a cookie. This allows authorization for server sent events.
-  """
-  origin = request.headers.get("Referer", "*")
-  if origin.endswith("/"): origin = origin[:-1]
-  cors_headers = {
-    "Access-Control-Allow-Methods": "GET, POST, DELETE, PUT, OPTIONS",
-    "Access-Control-Allow-Credentials": "true",
-    "Access-Control-Allow-Origin": origin,
-    "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept, Authorization",
-    "Access-Control-Max-Age": "86400"
-  }
-  if request.method == "OPTIONS":
-    """if not ("amiscan.xyz" in origin or "localhost" in origin):
-      print(origin, "not in allowed origins")
-      return PlainTextResponse("CORS error", status_code=401)"""
-    return PlainTextResponse(
-      "OK",
-      status_code=200,
-      headers=cors_headers
-    )
-
-  headers = MutableHeaders(request._headers)
-  headers["X-User-Id"] = "alice@test"#payload.get("sub", None)
-  request._headers = headers
-  request.scope.update(headers=request.headers.raw)
-
-  response = await call_next(request)
-  for h in cors_headers:
-    response.headers[h] = cors_headers[h]
-  return response
 
 @app.post("/api/events/{userId}")
 def post_keystrokes(batch: KeystrokesBatch, request: Request, userId: str, x_user_id: str = Header(default=None), db = Depends(database)):
