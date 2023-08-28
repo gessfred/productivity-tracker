@@ -33,13 +33,24 @@ def test_user_signup():
   response = res.json()
   assert "access_token" in response
   assert "refresh_token" in response
-  # assert login works
+  res = client.post("/login", data={"email": "alice@example.com", "password": "1234"})
+  assert res.status_code == 200
 
 def test_login_unauthenticated_user():
-  pass
+  res = client.post("/login", data={"email": "bob@example.com", "password": "1234"})
+  assert res.status_code == 400
+
+def test_signup_existing_user():
+  res = client.post("/signup", data={"email": "charlie@example.com", "password": "1234"})
+  assert res.status_code == 200
+  res = client.post("/signup", data={"email": "charlie@example.com", "password": "1234"})
+  assert res.status_code == 400
 
 def test_wrong_password():
-  pass
+  res = client.post("/signup", data={"email": "danilo@example.com", "password": "1234"})
+  assert res.status_code == 200
+  res = client.post("/login", data={"email": "danilo@example.com", "password": "abcd"})
+  assert res.status_code == 400
 
 def test_bearer_token():
   pass

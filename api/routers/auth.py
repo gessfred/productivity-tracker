@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Form, Depends
+from fastapi import APIRouter, Request, Form, Depends, HTTPException
 import bcrypt
 from dependencies import get_db, SessionLocal
 from models import User
@@ -23,16 +23,30 @@ def create_access_token(claim: dict, expires_delta: timedelta = None):
   encoded_jwt = jwt.encode(claim, SECRET_KEY, algorithm=ALGORITHM)
   return encoded_jwt
 
-@router.post("/signup")
-def signup(request: Request, email: str = Form(...), password: str = Form(...), db: SessionLocal = Depends(get_db)):
-  user = User(email=email, password_digest=hash_password(password))
-  db.add(user)
-  db.commit()
+def create_bearer_tokens(user: User):
   access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
   access_token = create_access_token(claim={"sub": user.email}, expires_delta=access_token_expires)
   
   refresh_token = create_access_token(claim={"sub": user.email, "type": "refresh"}, expires_delta=timedelta(days=30))
-  return {
-    "access_token": access_token,
-    "refresh_token": refresh_token
-  }
+  
+  return {"access_token": access_token, "refresh_token": refresh_token}
+
+@router.post("/signup")
+def signup(request: Request, email: str = Form(...), password: str = Form(...), db: SessionLocal = Depends(get_db)):
+  user = User(email=email, password_digest=hash_password(password))
+  try:
+    db.add(user)
+    db.commit()
+  except:
+    raise HTTPException(status_code=400, detail="User already exists")
+  return create_bearer_tokens(user)
+
+# token refresh
+
+@router.post("/login")
+def signup(request: Request, email: str = Form(...), password: str = Form(...), db: SessionLocal = Depends(get_db)):
+  user: User = db.query(User).filter(User.email == email).first()
+  if not user or not bcrypt.checkpw(password.encode('utf-8'), user.password_digest):
+      raise HTTPException(status_code=400, detail="Incorrect username or password")
+  
+  return create_bearer_tokens(user)
