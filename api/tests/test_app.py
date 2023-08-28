@@ -1,6 +1,6 @@
 from uuid import uuid4
 from datetime import datetime
-from app import app, database
+from main import app, database
 from fastapi.testclient import TestClient 
 from unittest.mock import MagicMock
 client = TestClient(app)

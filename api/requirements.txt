@@ -2,3 +2,7 @@ psycopg2-binary
 fastapi[all]
 uvicorn
 pytest
+sqlalchemy 
+bcrypt 
+pydantic 
+python-jose
