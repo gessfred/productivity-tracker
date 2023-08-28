@@ -7,11 +7,17 @@ from datetime import datetime, timedelta
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.responses import JSONResponse, PlainTextResponse
 from starlette.datastructures import MutableHeaders
-router = APIRouter()
+
+router = APIRouter(prefix="")
 
 SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 120
+
+def decode_auth_header(auth):
+  token = auth.split()
+  assert len(token) == 2
+  return token[1]
 
 class JWTMiddleware(BaseHTTPMiddleware):
   async def dispatch(self, request: Request, call_next):
@@ -39,11 +45,13 @@ class JWTMiddleware(BaseHTTPMiddleware):
           status_code=200,
           headers=cors_headers
         )
-      #payload = jwt.decode(token, auth.SECRET_KEY, algorithms=[auth.ALGORITHM])
-      headers = MutableHeaders(request._headers)
-      headers["X-User-Id"] = "alice@test"#payload.get("sub", None)
-      request._headers = headers
-      request.scope.update(headers=request.headers.raw)
+      if request.url.path not in ["/login", "/signup"]:
+        token = decode_auth_header(request.headers['Authorization'])
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM]) # issuer, audience?
+        headers = MutableHeaders(request._headers)
+        headers["X-User-Id"] = "alice@test"#payload.get("sub", None)
+        request._headers = headers
+        request.scope.update(headers=request.headers.raw)
 
       response = await call_next(request)
       for h in cors_headers:

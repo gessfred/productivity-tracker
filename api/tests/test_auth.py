@@ -53,7 +53,12 @@ def test_wrong_password():
   assert res.status_code == 400
 
 def test_bearer_token():
-  res = client.post("/signup", data={"email": "danilo@example.com", "password": "1234"})
+  res = client.post("/signup", data={"email": "fred@example.com", "password": "1234"})
   assert res.status_code == 200
   bearer = res.json()["access_token"]
-  assert client.get()
+  assert client.get(
+    "/api/events/count",
+    headers={
+      "Authorization": "Bearer " + bearer 
+    }
+  ).status_code == 200

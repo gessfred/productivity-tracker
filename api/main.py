@@ -6,12 +6,13 @@ from typing import List, Any, Tuple, Dict, Optional
 import os
 from datetime import datetime
 from uuid import uuid4
-from routers import auth
+from routers import auth, events
 from dependencies import get_db, engine
 from models import Base, User
 
 app = FastAPI()
 app.include_router(auth.router)
+app.include_router(events.router)
 app.add_middleware(auth.JWTMiddleware)
 
 def create_table(name: str, table: dict) -> str:
@@ -275,12 +276,6 @@ def get_events_statistics(request: Request, userId: str, interval='1 month', db 
   """, (userId,interval))
   return {
     'data': data
-  }
-
-@app.get("/api/events/count")
-def get_keystrokes(request: Request, db = Depends(database)):
-  return {
-    "count": db.query(f"SELECT COUNT(*) FROM {EVENTS_TABLE}")[0][0]
   }
 
 @app.get("/api/stats/typing/{userId}")
