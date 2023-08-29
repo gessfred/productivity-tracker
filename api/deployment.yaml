@@ -18,7 +18,7 @@ spec:
       - name: keybored-api
         image: ghcr.io/gessfred/keybored-api:latest
         command: [ "uvicorn" ]
-        args: [ "main:app", "--port", "8080" ]
+        args: [ "main:app", "--host", "0.0.0.0", "--port", "8080" ]
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
