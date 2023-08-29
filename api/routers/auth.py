@@ -19,6 +19,9 @@ def decode_auth_header(auth):
   assert len(token) == 2
   return token[1]
 
+def decode_jwt_token():
+  pass
+
 class JWTMiddleware(BaseHTTPMiddleware):
   async def dispatch(self, request: Request, call_next):
       """
@@ -46,10 +49,12 @@ class JWTMiddleware(BaseHTTPMiddleware):
           headers=cors_headers
         )
       if request.url.path not in ["/login", "/signup"]:
+        if "Authorization" not in request.headers:
+          raise HTTPException(status_code=400, detail="A token is required to access this endpoint")
         token = decode_auth_header(request.headers['Authorization'])
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM]) # issuer, audience?
         headers = MutableHeaders(request._headers)
-        headers["X-User-Id"] = "alice@test"#payload.get("sub", None)
+        headers["X-User-Id"] = payload.get("sub", None)
         request._headers = headers
         request.scope.update(headers=request.headers.raw)
 

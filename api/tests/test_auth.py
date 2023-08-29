@@ -1,31 +1,18 @@
 from main import app
 from dependencies import get_db
 from fastapi.testclient import TestClient
+from fastapi import HTTPException
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 from dependencies import get_db, engine
 from models import Base, User
-
-SQLALCHEMY_DATABASE_URL = "sqlite://"
-
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
-)
-Base.metadata.create_all(bind=engine)
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-def override_get_db():
-  try:
-    db = TestingSessionLocal()
-    yield db
-  finally:
-    db.close()
+from tests.utils import override_get_db
+from pytest import raises
 
 app.dependency_overrides[get_db] = override_get_db
 client = TestClient(app)
+client.raise_server_exceptions = False
 
 def test_user_signup():
   res = client.post("/signup", data={"email": "alice@example.com", "password": "1234"})
@@ -53,11 +40,13 @@ def test_wrong_password():
   assert res.status_code == 400
 
 def test_bearer_token():
+  with raises(HTTPException) as e:
+    assert client.get("/api/version").status_code == 400
   res = client.post("/signup", data={"email": "fred@example.com", "password": "1234"})
   assert res.status_code == 200
   bearer = res.json()["access_token"]
   assert client.get(
-    "/api/events/count",
+    "/api/version",
     headers={
       "Authorization": "Bearer " + bearer 
     }
