@@ -1,13 +1,7 @@
-from fastapi import FastAPI, Depends, Request, Header
-
-from pydantic import BaseModel
-from psycopg2 import pool, sql
-from typing import List, Any, Tuple, Dict, Optional
-import os
+from fastapi import FastAPI, Depends, Request
 
 from routers import auth, events
-from dependencies import get_db, engine
-from models import Base, User
+from dependencies import get_db, engine, Base
 
 app = FastAPI()
 app.include_router(auth.router)
@@ -156,11 +150,4 @@ def get_version():
 
 @app.on_event("startup")
 def startup():
-  pass 
-  """app.state.db = Database(
-    host="db-postgresql-fra1-33436-do-user-6069962-0.b.db.ondigitalocean.com",#os.getenv("DB_HOST"),
-    port=os.getenv("DB_PORT"),
-    user=os.getenv("DB_USER"),
-    password=os.getenv("DB_PASSWORD"),
-    database=os.getenv("DB_NAME")
-  )"""
+  Base.metadata.create_all(bind=engine)

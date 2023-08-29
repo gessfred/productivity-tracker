@@ -24,7 +24,7 @@ spec:
         - containerPort: 8080
         env:
         - name: DB_NAME
-          value: "defaultdb"
+          value: "keylogger"
         - name: DB_PORT
           value: "25060"
         - name: DB_USER

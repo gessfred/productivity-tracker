@@ -1,7 +1,7 @@
-from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, Text, Sequence
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, Sequence
 import os
-Base = declarative_base()
+from dependencies import Base
+#Base = declarative_base()
 
 schema = os.getenv("MAIN_APP_SCHEMA")
 #db: Session = Depends(SessionLocal)
