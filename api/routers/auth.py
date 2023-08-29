@@ -3,7 +3,7 @@ import bcrypt
 from dependencies import get_db, SessionLocal
 from models import User
 from jose import JWTError, jwt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.responses import JSONResponse, PlainTextResponse
 from starlette.datastructures import MutableHeaders
@@ -65,6 +65,10 @@ class JWTMiddleware(BaseHTTPMiddleware):
 
 def hash_password(password: str):
   return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+
+def is_token_expired(claim: dict):
+  expiration_datetime = datetime.fromtimestamp(claim["exp"], tz=timezone.utc)
+  return datetime.now(timezone.utc) > expiration_datetime
 
 def create_access_token(claim: dict, expires_delta: timedelta = None):
   claim = claim.copy()

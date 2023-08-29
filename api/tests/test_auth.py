@@ -51,3 +51,12 @@ def test_bearer_token():
       "Authorization": "Bearer " + bearer 
     }
   ).status_code == 200
+
+def test_tokens_eventually_expire():
+  pass
+
+def test_tokens_contain_relevant_claims():
+  pass
+
+def test_token_refresh():
+  pass
