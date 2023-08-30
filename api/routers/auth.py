@@ -48,7 +48,7 @@ class JWTMiddleware(BaseHTTPMiddleware):
           status_code=200,
           headers=cors_headers
         )
-      if request.url.path not in ["/login", "/signup"]:
+      if request.url.path not in ["/api/login", "/api/signup"]:
         if "Authorization" not in request.headers:
           raise HTTPException(status_code=400, detail="A token is required to access this endpoint")
         token = decode_auth_header(request.headers['Authorization'])
@@ -88,7 +88,7 @@ def create_bearer_tokens(user: User):
   
   return {"access_token": access_token, "refresh_token": refresh_token}
 
-@router.post("/signup")
+@router.post("/api/signup")
 def signup(request: Request, email: str = Form(...), password: str = Form(...), db: SessionLocal = Depends(get_db)):
   user = User(email=email, password_digest=hash_password(password))
   try:
@@ -100,7 +100,7 @@ def signup(request: Request, email: str = Form(...), password: str = Form(...), 
 
 # token refresh
 
-@router.post("/login")
+@router.post("/api/login")
 def signup(request: Request, email: str = Form(...), password: str = Form(...), db: SessionLocal = Depends(get_db)):
   user: User = db.query(User).filter(User.email == email).first()
   if not user or not bcrypt.checkpw(password.encode('utf-8'), user.password_digest):
