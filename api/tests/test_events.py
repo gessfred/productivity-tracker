@@ -10,7 +10,7 @@ app.dependency_overrides[get_db] = override_get_db
 
 
 def test_insert_single_event():
-  res = client.post("/api/signup", data={"email": "jean@example.com", "password": "1234"})
+  res = client.post("/api/signup", data={"username": "jean@example.com", "password": "1234"})
   token = res.json()["access_token"]
   test_request = [
     {

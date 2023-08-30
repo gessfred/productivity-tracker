@@ -82,15 +82,15 @@ def create_access_token(claim: dict, expires_delta: timedelta = None):
 
 def create_bearer_tokens(user: User):
   access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-  access_token = create_access_token(claim={"sub": user.email}, expires_delta=access_token_expires)
+  access_token = create_access_token(claim={"sub": user.username}, expires_delta=access_token_expires)
   
-  refresh_token = create_access_token(claim={"sub": user.email, "type": "refresh"}, expires_delta=timedelta(days=30))
+  refresh_token = create_access_token(claim={"sub": user.username, "type": "refresh"}, expires_delta=timedelta(days=30))
   
   return {"access_token": access_token, "refresh_token": refresh_token}
 
 @router.post("/api/signup")
-def signup(request: Request, email: str = Form(...), password: str = Form(...), db: SessionLocal = Depends(get_db)):
-  user = User(email=email, password_digest=hash_password(password))
+def signup(request: Request, username: str = Form(...), password: str = Form(...), db: SessionLocal = Depends(get_db)):
+  user = User(username=username, password_digest=hash_password(password))
   try:
     db.add(user)
     db.commit()
@@ -101,8 +101,8 @@ def signup(request: Request, email: str = Form(...), password: str = Form(...), 
 # token refresh
 
 @router.post("/api/login")
-def signup(request: Request, email: str = Form(...), password: str = Form(...), db: SessionLocal = Depends(get_db)):
-  user: User = db.query(User).filter(User.email == email).first()
+def signup(request: Request, username: str = Form(...), password: str = Form(...), db: SessionLocal = Depends(get_db)):
+  user: User = db.query(User).filter(User.username == username).first()
   if not user or not bcrypt.checkpw(password.encode('utf-8'), user.password_digest):
       raise HTTPException(status_code=400, detail="Incorrect username or password")
   

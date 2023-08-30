@@ -35,7 +35,7 @@ def agent_description(request: Request):
 @router.get("/api/events/count")
 def get_keystrokes(request: Request, x_user_id: str = Header(default=None), db = Depends(get_db)):
   return {
-    "count": db.query(func.count(User.id)).filter(User.email == x_user_id).scalar()#
+    "count": db.query(func.count(User.id)).filter(User.username == x_user_id).scalar()#
   }
 
 @router.post("/api/events")
