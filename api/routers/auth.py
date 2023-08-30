@@ -90,7 +90,7 @@ def create_bearer_tokens(user: User):
 
 @router.post("/api/signup")
 def signup(request: Request, username: str = Form(...), password: str = Form(...), db: SessionLocal = Depends(get_db)):
-  user = User(username=username, password_digest=hash_password(password))
+  user = User(username=username, password_digest=hash_password(password).decode('utf-8'))
   try:
     db.add(user)
     db.commit()
@@ -109,8 +109,6 @@ def password_matches(received, stored):
 @router.post("/api/login")
 def signup(request: Request, username: str = Form(...), password: str = Form(...), db: SessionLocal = Depends(get_db)):
   user: User = db.query(User).filter(User.username == username).first()
-
   if not user or not password_matches(password, user.password_digest):
       raise HTTPException(status_code=400, detail="Incorrect username or password")
-  
   return create_bearer_tokens(user)
