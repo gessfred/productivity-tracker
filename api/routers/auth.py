@@ -100,10 +100,17 @@ def signup(request: Request, username: str = Form(...), password: str = Form(...
 
 # token refresh
 
+def password_matches(received, stored):
+  if not isinstance(stored, bytes):
+    print("converting stored password")
+    stored = stored.encode('utf-8')
+  return bcrypt.checkpw(received.encode('utf-8'), stored)
+
 @router.post("/api/login")
 def signup(request: Request, username: str = Form(...), password: str = Form(...), db: SessionLocal = Depends(get_db)):
   user: User = db.query(User).filter(User.username == username).first()
-  if not user or not bcrypt.checkpw(password.encode('utf-8'), user.password_digest):
+
+  if not user or not password_matches(password, user.password_digest):
       raise HTTPException(status_code=400, detail="Incorrect username or password")
   
   return create_bearer_tokens(user)
