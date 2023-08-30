@@ -6,17 +6,18 @@ with recursive time_windows as (
     where window_start + interval '15 minutes' <= now()
 ),
 recent_events as (
-  select * from keyevents 
+  select * from typing_events 
   where record_time >= now() - interval '6 hours'
 ),
 type_intervals as (
   select 
+    user_id,
     window_start,
     source_url,
     session_id,
     record_time,
     lead(record_time) over (
-      partition by window_start, source_url, session_id
+      partition by user_id, window_start, source_url, session_id
       order by record_time asc
     ) - record_time  as interval_to_next_event,
     is_return as is_error
@@ -30,7 +31,10 @@ flows as (
   select 
     *,
     case 
-      when lag(interval_to_next_event) over (partition by window_start, source_url, session_id order by record_time asc) > interval '5 seconds' then 1 
+      when lag(interval_to_next_event) over (
+        partition by user_id, window_start, source_url, session_id 
+        order by record_time asc
+      ) > interval '5 seconds' then 1 
       else 0
     end as flow_indicator
   from type_intervals
@@ -39,13 +43,14 @@ grouped_flows as (
   select 
     *,
     sum(flow_indicator) over (
-      partition by window_start, source_url, session_id 
+      partition by user_id, window_start, source_url, session_id 
       order by record_time asc
     ) as flow_id
   from flows
 ),
 stats_by_flow as (
   select 
+    user_id,
     window_start,
     source_url,
     session_id,
@@ -54,10 +59,11 @@ stats_by_flow as (
     count(*) as event_count,
     sum(cast(is_error as int)) as error_count
   from grouped_flows
-  group by window_start, source_url,session_id,flow_id
+  group by user_id, window_start, source_url,session_id,flow_id
   having count(*) > 1
 )
 select 
+  user_id,
   window_start,
   sum(avg_type_speed * event_count) / sum(event_count) as speed,
   coalesce(
@@ -69,5 +75,5 @@ select
   sum(error_count) / sum(event_count) as relative_error
 from stats_by_flow
 where event_count > 1
-group by window_start
+group by user_id, window_start
 order by window_start desc

@@ -53,6 +53,8 @@ def test_bearer_token():
   ).status_code == 200
 
 def test_tokens_eventually_expire():
+  # generate token with expiration in the past
+  # access endpoint with expired token and test returns 400
   pass
 
 def test_tokens_contain_relevant_claims():

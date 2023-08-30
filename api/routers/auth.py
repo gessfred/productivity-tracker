@@ -81,8 +81,7 @@ def create_access_token(claim: dict, expires_delta: timedelta = None):
   return encoded_jwt
 
 def create_bearer_tokens(user: User):
-  access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-  access_token = create_access_token(claim={"sub": user.username}, expires_delta=access_token_expires)
+  access_token = create_access_token(claim={"sub": user.username}, expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
   
   refresh_token = create_access_token(claim={"sub": user.username, "type": "refresh"}, expires_delta=timedelta(days=30))
   

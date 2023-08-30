@@ -8,6 +8,7 @@ with open("typing_speed_current.sql") as fd:
 
 def make_event(t, source_url="example.com", session_id="1", is_error=False):
     return {
+        "user_id": "alice",
         "session_id": session_id,
         "source_url": source_url,
         "record_time": t,
@@ -16,7 +17,7 @@ def make_event(t, source_url="example.com", session_id="1", is_error=False):
 
 def test_weight_is_accounted_per_flow():
     now = dt.now()
-    keyevents = pd.DataFrame((
+    typing_events = pd.DataFrame((
         [ make_event(now - timedelta(milliseconds=k * 3)) for k in range (10)] + 
         [ make_event(now - timedelta(milliseconds=k * 8 + 55), source_url="google.com") for k in range (30)]
     ))
@@ -27,13 +28,13 @@ def test_weight_is_accounted_per_flow():
     #assert res.speed.values[0] == 5
 
 def test_empty_case_returns_zeros():
-    keyevents = pd.DataFrame([
+    typing_events = pd.DataFrame([
         make_event(dt(2000, 1, 1, 0, 0))
     ])
     res = duckdb.sql(query).df()
 
     assert res.speed.isna().all()
-    keyevents = keyevents.head(0)
+    typing_events = typing_events.head(0)
     #keyevents = pd.DataFrame([], columns=["record_time", "source_url", "session_id"])
     res = duckdb.sql(query).df()
 
@@ -41,7 +42,7 @@ def test_empty_case_returns_zeros():
 
 def test_domains_are_seggregated():
     now = dt.now()
-    keyevents = pd.DataFrame([
+    typing_events = pd.DataFrame([
         make_event(now ), 
         make_event(now - timedelta(milliseconds=5)), 
         make_event(now - timedelta(milliseconds=10)), 
@@ -56,7 +57,7 @@ def test_domains_are_seggregated():
 
 def test_intervals_are_ignored():
     now = dt.now()
-    keyevents = pd.DataFrame([
+    typing_events = pd.DataFrame([
         make_event(now ), 
         make_event(now - timedelta(milliseconds=5)), 
         make_event(now - timedelta(milliseconds=10)), 
