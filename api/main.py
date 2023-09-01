@@ -1,11 +1,12 @@
 from fastapi import FastAPI, Depends, Request
 
-from routers import auth, events
+from routers import auth, events, analytics
 from dependencies import get_db, engine, Base
 
 app = FastAPI()
 app.include_router(auth.router)
 app.include_router(events.router)
+app.include_router(analytics.router)
 app.add_middleware(auth.JWTMiddleware)
 
 EVENTS_TABLE = "keyevents"
@@ -136,12 +137,6 @@ def get_events_statistics(request: Request, userId: str, interval='1 month', db 
   """, (userId,interval))
   return {
     'data': data
-  }
-
-@app.get("/api/stats/typing/{userId}")
-def get_typing_speed_current(userId: str, db = Depends(get_db)):
-  return {
-    "stats": db.query("select * from typing_speed_current")
   }
 
 @app.get("/api/version")
