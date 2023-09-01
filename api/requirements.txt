@@ -1,8 +1,11 @@
 psycopg2-binary
 fastapi[all]
 uvicorn
-pytest
 sqlalchemy 
 bcrypt 
 pydantic 
 python-jose
+pandas==2.0.3
+duckdb==0.8.1
+pytest==7.4.0
+duckdb-engine

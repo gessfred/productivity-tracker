@@ -11,7 +11,7 @@ class User(Base):
   __tablename__ = "users"
   __table_args__ = {'schema': schema}
 
-  id = Column(Integer, primary_key=True, index=True)
+  user_id = Column(Integer, Sequence('keystroke_id_seq'), primary_key=True, index=True)
   username = Column(String, index=True, unique=True)
   email = Column(String, unique=True, index=True)
   password_digest = Column(String)
