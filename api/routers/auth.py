@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Form, Depends, HTTPException
+from fastapi import APIRouter, Request, Form, Depends, HTTPException, Header
 import bcrypt
 from dependencies import get_db, SessionLocal
 from models import User
@@ -48,7 +48,7 @@ class JWTMiddleware(BaseHTTPMiddleware):
           status_code=200,
           headers=cors_headers
         )
-      if request.url.path not in ["/api/login", "/api/signup"]:
+      if request.url.path not in ["/api/login", "/api/signup", "/api/token"]:
         if "Authorization" not in request.headers:
           raise HTTPException(status_code=400, detail="A token is required to access this endpoint")
         token = decode_auth_header(request.headers['Authorization'])
@@ -110,4 +110,13 @@ def signup(request: Request, username: str = Form(...), password: str = Form(...
   user: User = db.query(User).filter(User.username == username).first()
   if not user or not password_matches(password, user.password_digest):
       raise HTTPException(status_code=400, detail="Incorrect username or password")
+  return create_bearer_tokens(user)
+
+@router.post("/api/token")
+def refresh_token(request: Request, db = Depends(get_db)):
+  token = decode_auth_header(request.headers['Authorization'])
+  claims = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+  user: User = db.query(User).filter(User.username == claims["sub"]).first()
+  if user is None or claims.get("type", None) != "refresh":
+    raise HTTPException(status_code=400, detail="User not found")
   return create_bearer_tokens(user)

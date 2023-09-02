@@ -52,6 +52,9 @@ def test_bearer_token():
     }
   ).status_code == 200
 
+def test_refresh_token_does_not_grant_routes():
+  pass
+
 def test_tokens_eventually_expire():
   # generate token with expiration in the past
   # access endpoint with expired token and test returns 400
@@ -61,4 +64,22 @@ def test_tokens_contain_relevant_claims():
   pass
 
 def test_token_refresh():
-  pass
+  res = client.post("/api/signup", data={"username": "alice@tiktoken.com", "password": "1234"})
+  assert res.status_code == 200
+  credentials1 = res.json()
+  assert "access_token" in credentials1
+  assert "refresh_token" in credentials1
+  res = client.post("/api/token", headers={"Authorization": "Bearer " + credentials1["refresh_token"]})
+  assert res.status_code == 200
+  credentials2 = res.json()
+  assert "access_token" in credentials2
+  assert "refresh_token" in credentials2
+
+def test_refresh_token_with_access_token_fails():
+  res = client.post("/api/signup", data={"username": "bob@tiktoken.com", "password": "1234"})
+  assert res.status_code == 200
+  credentials1 = res.json()
+  assert "access_token" in credentials1
+  assert "refresh_token" in credentials1
+  res = client.post("/api/token", headers={"Authorization": "Bearer " + credentials1["access_token"]})
+  assert res.status_code == 400
