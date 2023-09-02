@@ -64,16 +64,18 @@ stats_by_flow as (
 )
 select 
   user_id,
-  window_start,
+  b.window_start,
   sum(avg_type_speed * event_count) / sum(event_count) as speed,
   coalesce(
     stddev(avg_type_speed),
     0
   ) as volatility,
-  sum(event_count) as event_count,
-  sum(error_count) as error_count,
-  sum(error_count) / sum(event_count) as relative_error
-from stats_by_flow
-where event_count > 1
-group by user_id, window_start
-order by window_start desc
+  coalesce(sum(event_count), 0) as event_count,
+  coalesce(sum(error_count), 0) as error_count,
+  coalesce(sum(error_count) / sum(event_count), 0) as relative_error
+from time_windows b
+left join stats_by_flow s
+	on s.window_start = b.window_start
+where b.window_start < now() --and event_count > 1
+group by user_id, b.window_start
+order by b.window_start desc
