@@ -63,7 +63,7 @@ stats_by_flow as (
   having count(*) > 1
 )
 select 
-  user_id,
+  u.user_id,
   b.window_start,
   sum(avg_type_speed * event_count) / sum(event_count) as speed,
   coalesce(
@@ -73,9 +73,11 @@ select
   coalesce(sum(event_count), 0) as event_count,
   coalesce(sum(error_count), 0) as error_count,
   coalesce(sum(error_count) / sum(event_count), 0) as relative_error
-from time_windows b
+from (select distinct user_id from stats_by_flow) u
+cross join time_windows b
 left join stats_by_flow s
-	on s.window_start = b.window_start
+	on s.window_start = b.window_start 
+  and s.user_id = u.user_id
 where b.window_start < now() --and event_count > 1
-group by user_id, b.window_start
+group by u.user_id, b.window_start
 order by b.window_start desc
