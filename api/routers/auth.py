@@ -13,7 +13,7 @@ router = APIRouter(prefix="")
 
 SECRET_KEY = os.environ["JWT_SECRET_KEY"]
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 120
+ACCESS_TOKEN_EXPIRE_MINUTES = 20
 
 def decode_auth_header(auth):
   token = auth.split()
@@ -84,7 +84,7 @@ def create_access_token(claim: dict, expires_delta: timedelta = None):
 def create_bearer_tokens(user: User):
   access_token = create_access_token(claim={"sub": user.username}, expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
   
-  refresh_token = create_access_token(claim={"sub": user.username, "type": "refresh"}, expires_delta=timedelta(days=30))
+  refresh_token = create_access_token(claim={"sub": user.username, "type": "refresh"}, expires_delta=timedelta(days=90))
   
   return {"access_token": access_token, "refresh_token": refresh_token}
 
