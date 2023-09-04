@@ -3,6 +3,9 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 from dependencies import get_db, engine
 from models import Base, User
+import os
+
+os.environ["JWT_SECRET_KEY"] = "oth42obgtwknbwl2ngl2np2non24ongtonh2gn2ngpwn"
 
 SQLALCHEMY_DATABASE_URL = "sqlite://"
 

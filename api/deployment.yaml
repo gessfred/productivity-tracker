@@ -34,6 +34,11 @@ spec:
             secretKeyRef:
               name: postgre-password
               key: db_password
+        - name: JWT_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: keylogger-secrets
+              key: jwt_secret_key
 ---
 apiVersion: v1
 kind: Service 

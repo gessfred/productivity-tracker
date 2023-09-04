@@ -1,9 +1,10 @@
+from tests.utils import override_get_db
 from uuid import uuid4
 from datetime import datetime
 from main import app
 from fastapi.testclient import TestClient
 from dependencies import get_db
-from tests.utils import override_get_db
+
 client = TestClient(app)
 
 app.dependency_overrides[get_db] = override_get_db

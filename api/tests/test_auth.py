@@ -1,3 +1,4 @@
+from tests.utils import override_get_db
 from main import app
 from dependencies import get_db
 from fastapi.testclient import TestClient
@@ -7,7 +8,6 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 from dependencies import get_db, engine
 from models import Base, User
-from tests.utils import override_get_db
 from pytest import raises
 
 app.dependency_overrides[get_db] = override_get_db
