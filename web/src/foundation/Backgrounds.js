@@ -34,6 +34,7 @@ export function Background({}) {
     <svg className='background' xmlns="http://www.w3.org/2000/svg">
       {[...Array(10).keys()].map(i => (
         <circle 
+          key={i}
           cx={getRandomInt(0, width)} 
           cy={getRandomInt(0, height)} 
           r={getRandomInt(50, 200)} 
