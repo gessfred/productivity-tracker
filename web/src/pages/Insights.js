@@ -39,29 +39,27 @@ export const options = {
   },
 }
 
-async function getStats(api) {
-  const stats = await api.get("/api/stats/typing")
-  return JSON.parse(stats.stats)
-}
-
 function TypingDashboard({ data }) {
+  console.log("typing dashboard", data && data.length)
   if(!data || data.length === 0) return <span></span>
-  console.log(data)
+  console.log(data.map(x => x.event_count))
   const chartData = data.map((item) => ({
     x: new Date(item.window_start),
     y: item.event_count,
   }));
-
+//labels: ['Jun', 'Jul', 'Aug'], in data
   return (
     <Line
-      options={options}
       data={{
-        labels: ['Jun', 'Jul', 'Aug'],
+        labels: data.map((x, i) => i),
         datasets: [
           {
             id: 1,
             label: '',
-            data: [5, 6, 7],
+            data: data.map(x => x.event_count).reverse(),
+            borderColor: 'rgba(75,192,192,1)', // Color of plot line
+            borderWidth: 2,
+            tension: 0.4
           }
         ],
       }}
@@ -74,7 +72,7 @@ export function Insights({show}) {
   const [typingData, setTypingData] = useState([])
   useEffect(() => {
     if(api) {
-      api.typingStats().then(console.log).catch(err => {})
+      api.typingStats().then(setTypingData).catch(err => {})
     }
   }, [isAuthenticated])
   console.log(typingData)
