@@ -74,7 +74,7 @@ export function Insights({show}) {
   const [typingData, setTypingData] = useState([])
   useEffect(() => {
     if(api) {
-      getStats(api).then(setTypingData).catch(err => {})
+      api.typingStats().then(console.log).catch(err => {})
     }
   }, [isAuthenticated])
   console.log(typingData)

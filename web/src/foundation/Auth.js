@@ -1,85 +1,31 @@
-import { useContext, createContext, useState, useEffect } from 'react'
+import { useContext, createContext, useState, useEffect, useCallback } from 'react'
 
 const AuthContext = createContext()
 
-export function API(url, access_token, refresh_token) {
-  const refresh_tok = () => {
-
-  }
-  return {
-    login: async (username, password) => {
-      let formData = new URLSearchParams({
-        username: username,
-        password: password
-      })
-      const response = await fetch(url+"/api/login", {
-        body: formData,
-        method: 'POST',
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded"
-        }
-      })
-      const credentials = await response.json()
-      return credentials
-    },
-    refresh_token: async () => {
-      console.log("refreshing token")
-      const response = await fetch(url+"/api/token", {
-
-      })
-      const credentials = await response.json()
-      console.log("successfully refresh token")
-      refresh_token(credentials)
-      return credentials
-    },
-    get: async (route) => {
-      console.log(url+route)
-      try {
-        const response = await fetch(url+route,{
-          headers: {
-            'Authorization': 'Bearer ' + access_token
-          }
-        })
-        console.log(response)
-        if(!response.ok) {
-          console.log("Bad response received:", response.text, response)
-        }
-        const json = await response.json()
-        return json
-
-      }
-      catch(e) {
-        this.refresh_token()
-        this.get(route)
-      }
-    }
-  }
-}
-
 export function AuthProvider({ children }) {
   const [identity, setIdentity] = useState(null) // contains user metadata and credentials
-  const api = API("https://keylogg.pub.gessfred.xyz", identity && identity.access_token, (credentials) => {
-    setIdentity(credentials)
-  })
-  const login = async (username, password) => {
-    const credentials = await api.login( username, password )
-    setIdentity(credentials)
-    localStorage.setItem("credentials", JSON.stringify(credentials))
-  }
   const isAuthenticated = identity !== null
+  //init hook
   useEffect(() => {
     const creds = localStorage.getItem("credentials")
     if(creds) {
       setIdentity(JSON.parse(creds))
+    } else {
+      setIdentity(null)
     }
   }, [])
+  const url = "https://keylogg.pub.gessfred.xyz"
+  const saveIdentity = (id) => {
+    localStorage.setItem("credentials", JSON.stringify(id))
+    setIdentity(id)
+  }
   return (
     <AuthContext.Provider
       value={{
-        identity,
-        login,
-        isAuthenticated,
-        api
+        identity: identity,
+        setIdentity: saveIdentity,
+        isAuthenticated: isAuthenticated,
+        url: url
       }}
     >
       {children}
@@ -87,6 +33,79 @@ export function AuthProvider({ children }) {
   )
 }
 
+
 export default function useAuth() {
-  return useContext(AuthContext)
+  console.log("useAuth")
+  const { url, identity, setIdentity, isAuthenticated } = useContext(AuthContext)
+  const [test, setTest] = useState()
+  const refreshToken = async () => {
+    console.log("refreshing token")
+    const response = await fetch(url+"/api/token", {
+      method: 'POST',
+      headers: Object.assign({}, {
+        Authorization: 'Bearer ' + identity.refresh_token
+      })
+    })
+    const token = await response.json()    
+    console.log("TOKEN!!!!", token)
+    token["last_update"] = new Date()
+    return token
+  }
+  const call = useCallback(async (method, endpoint, data, access_token) => {
+    console.log(method, identity, access_token)
+    const params = {
+      method: method,
+      headers: Object.assign({}, {
+        Authorization: 'Bearer ' + (access_token || identity.access_token),
+        "Content-Type": "application/json",
+        Accept: 'application/json'
+      })
+    }
+    const response = await fetch(url+endpoint, params)
+    return await response.json()
+  }, [identity && identity.access_token])
+  const callOrRefreshToken = async (method, endpoint, data) => {
+    try {
+      return await call(method, endpoint, data)
+    }
+    catch(e) {
+      const token = await refreshToken()
+      console.log("refreshing token")
+      setIdentity(token)
+      console.log("refreshed token", token)
+      return await call(method, endpoint, data, token)
+
+    }
+  }
+  const api = {
+    typingStats: async () => {
+      console.log("get typing stats")
+      const { stats } = await callOrRefreshToken("GET", "/api/stats/typing")
+      if(stats) return JSON.parse(stats)
+      return []
+    }
+  }
+  const login = async (username, password) => {
+    console.log("login@", url)
+    let formData = new URLSearchParams({
+      username: username,
+      password: password
+    })
+    const response = await fetch(url+"/api/login", {
+      body: formData,
+      method: 'POST',
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      }
+    })
+    const credentials = await response.json()
+    credentials["last_update"] = new Date()
+    setIdentity(credentials)
+    return credentials
+  }
+  return {
+    api,
+    login,
+    isAuthenticated
+  }
 }
