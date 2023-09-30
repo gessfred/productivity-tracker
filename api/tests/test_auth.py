@@ -1,4 +1,4 @@
-from tests.utils import override_get_db
+from tests.utils import get_docker_engine
 from main import app
 from dependencies import get_db
 from fastapi.testclient import TestClient
@@ -10,11 +10,11 @@ from dependencies import get_db, engine
 from models import Base, User
 from pytest import raises
 
-app.dependency_overrides[get_db] = override_get_db
+app.dependency_overrides[get_db] = get_docker_engine
 client = TestClient(app)
 client.raise_server_exceptions = False
 
-def test_user_signup():
+def test_user_signup(postgres_db):
   res = client.post("/api/signup", data={"username": "alice@example.com", "password": "1234"})
   assert res.status_code == 200
   response = res.json()
@@ -23,23 +23,23 @@ def test_user_signup():
   res = client.post("/api/login", data={"username": "alice@example.com", "password": "1234"})
   assert res.status_code == 200
 
-def test_login_unauthenticated_user():
+def test_login_unauthenticated_user(postgres_db):
   res = client.post("/api/login", data={"username": "bob@example.com", "password": "1234"})
   assert res.status_code == 400
 
-def test_signup_existing_user():
+def test_signup_existing_user(postgres_db):
   res = client.post("/api/signup", data={"username": "charlie@example.com", "password": "1234"})
   assert res.status_code == 200
   res = client.post("/api/signup", data={"username": "charlie@example.com", "password": "1234"})
   assert res.status_code == 400
 
-def test_wrong_password():
+def test_wrong_password(postgres_db):
   res = client.post("/api/signup", data={"username": "danilo@example.com", "password": "1234"})
   assert res.status_code == 200
   res = client.post("/api/login", data={"username": "danilo@example.com", "password": "abcd"})
   assert res.status_code == 400
 
-def test_bearer_token():
+def test_bearer_token(postgres_db):
   #with raises(HTTPException) as e:
   #  assert client.get("/api/version").status_code == 400
   res = client.post("/api/signup", data={"username": "fred@example.com", "password": "1234"})
@@ -63,7 +63,7 @@ def test_tokens_eventually_expire():
 def test_tokens_contain_relevant_claims():
   pass
 
-def test_token_refresh():
+def test_token_refresh(postgres_db):
   res = client.post("/api/signup", data={"username": "alice@tiktoken.com", "password": "1234"})
   assert res.status_code == 200
   credentials1 = res.json()
@@ -75,7 +75,7 @@ def test_token_refresh():
   assert "access_token" in credentials2
   assert "refresh_token" in credentials2
 
-def test_refresh_token_with_access_token_fails():
+def test_refresh_token_with_access_token_fails(postgres_db):
   res = client.post("/api/signup", data={"username": "bob@tiktoken.com", "password": "1234"})
   assert res.status_code == 200
   credentials1 = res.json()

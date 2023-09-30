@@ -1,4 +1,4 @@
-from tests.utils import override_get_db
+from tests.utils import get_docker_engine
 from uuid import uuid4
 from datetime import datetime
 from main import app
@@ -7,10 +7,10 @@ from dependencies import get_db
 
 client = TestClient(app)
 
-app.dependency_overrides[get_db] = override_get_db
+app.dependency_overrides[get_db] = get_docker_engine
 
 
-def test_insert_single_event():
+def test_insert_single_event(postgres_db):
   res = client.post("/api/signup", data={"username": "jean@example.com", "password": "1234"})
   token = res.json()["access_token"]
   test_request = [
