@@ -50,3 +50,19 @@ def test_top_sites_ranking(postgres_db):
     assert len(stats) == 2, stats
     assert stats[0]["url"] == "google.com"
     assert stats[1]["url"] == "facebook.com"
+
+def test_typing_stats(postgres_db):
+    headers = get_test_user()
+    test_request = [generate_event("google.com") for _ in range(10)] + [generate_event("facebook.com")]
+    res = client.post(
+        "/api/events", 
+        json={"events": test_request},
+        headers=headers
+    )
+    assert res.status_code
+    res = client.get("/api/stats/typing",
+        headers=headers
+    )
+    assert res.status_code == 200
+    stats = res.json()["stats"]
+    assert len(stats) == 2, stats

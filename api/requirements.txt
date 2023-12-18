@@ -1,7 +1,7 @@
 psycopg2-binary
 fastapi[all]
 uvicorn
-sqlalchemy 
+sqlalchemy==2.0.23
 bcrypt 
 pydantic 
 python-jose

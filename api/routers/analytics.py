@@ -10,17 +10,17 @@ def get_typing_speed_history(request: Request, resolution: str = "15 minutes", l
   return {
     "stats": pd.read_sql("""
       with recursive time_windows as (
-          select now() - interval '%(lookback_time)s' as window_start
+          select now() - interval %(lookback_time)s as window_start
           union all
-          select window_start + interval '%(resolution)s'
+          select window_start + interval %(resolution)s
           from time_windows
-          where window_start + interval '%(resolution)s' <= now()
+          where window_start + interval %(resolution)s <= now()
       ),
       recent_events as (
         select * from typing_events 
         where 
-          record_time >= now() - interval '%(lookback_time)s' and 
-          user_id = '%(user_id)s'
+          record_time >= now() - interval %(lookback_time)s and 
+          user_id = %(user_id)s
       ),
       type_intervals as (
         select 
@@ -37,7 +37,7 @@ def get_typing_speed_history(request: Request, resolution: str = "15 minutes", l
         from recent_events 
         join time_windows on 
           record_time >= window_start and 
-          record_time < window_start + interval '%(resolution)s'
+          record_time < window_start + interval %(resolution)s
         order by record_time asc
       ),
       flows as (
