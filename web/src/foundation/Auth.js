@@ -78,10 +78,16 @@ export default function useAuth() {
     }
   }
   const api = {
-    typingStats: async () => {
-      console.log("get typing stats")
+    typingStats: async (lookback, interval) => {
+      console.log("get typing stats", lookback, interval)
       const { stats } = await callOrRefreshToken("GET", "/api/stats/typing")
       if(stats) return JSON.parse(stats)
+      return []
+    },
+    topSites: async (lookback) => {
+      console.log("fetching top sites", lookback)
+      const { data } = await callOrRefreshToken("GET", "/api/stats/top-sites")
+      if(data) return JSON.parse(data)
       return []
     }
   }

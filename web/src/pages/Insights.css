@@ -1,6 +1,7 @@
 #insights-feed {
   width: 60%;
-  
+  height: calc(100vh - 300px);
+  overflow: scroll;
 }
 
 #insights-lang-request {
@@ -11,4 +12,11 @@
   color: white;
   border-radius: 8px;
   width: 60%;
+}
+
+#typing-view { 
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
 }

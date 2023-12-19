@@ -39,43 +39,42 @@ export const options = {
   },
 }
 
-function TypingDashboard({ data }) {
+function TypingDashboard({ data, labels, title }) {
   console.log("typing dashboard", data && data.length)
   if(!data || data.length === 0) return <span></span>
-  console.log(data.map(x => x.event_count))
-  const chartData = data.map((item) => ({
-    x: new Date(item.window_start),
-    y: item.event_count,
-  }));
-//labels: ['Jun', 'Jul', 'Aug'], in data
   return (
-    <Line
-      data={{
-        labels: data.map((x, i) => i),
-        datasets: [
-          {
-            id: 1,
-            label: '',
-            data: data.map(x => x.event_count).reverse(),
-            borderColor: 'rgba(75,192,192,1)', // Color of plot line
-            borderWidth: 2,
-            tension: 0.4
-          }
-        ],
-      }}
-    />
+    <div>
+      <h3>{title}</h3>
+      <Line
+        data={{
+          labels: labels,
+          datasets: [
+            {
+              id: 1,
+              label: '???',
+              data: data,
+              borderColor: 'rgba(255,87,51,1)', // Color of plot line
+              borderWidth: 2,
+              tension: 0.4
+            }
+          ],
+        }}
+      />
+    </div>
   );
 }
 
 export function Insights({show}) {
   const { api, isAuthenticated } = useAuth()
   const [typingData, setTypingData] = useState([])
+  const [topSites, setTopSites] = useState([])
   useEffect(() => {
     if(api) {
       api.typingStats().then(setTypingData).catch(err => {})
+      api.topSites().then(console.log).catch(err => {})
     }
   }, [isAuthenticated])
-  console.log(typingData)
+  console.log(typingData, topSites)
   return (
     <div>
       <Background />
@@ -87,7 +86,20 @@ export function Insights({show}) {
         />
         <input type="text" id="insights-lang-request" />
         <div id="insights-feed">
-          <TypingDashboard data={typingData} />
+          <h3>Top sites</h3>
+          <div>
+            {topSites.map(({url, count}) => (
+              <div>
+                <span>{url}</span>
+                <span>{count}</span>
+              </div>
+            ))}
+          </div>
+          <div id="typing-view">
+            <TypingDashboard title="Event count" labels={(typingData || []).map((x, i) => i)} data={(typingData || []).map(x => x.event_count).reverse()} />
+            <TypingDashboard title="Errors" labels={(typingData || []).map((x, i) => i)} data={(typingData || []).map(x => x.relative_error).reverse()} />
+            <TypingDashboard title="Typing speed" labels={(typingData || []).map((x, i) => i)} data={(typingData || []).map(x => x.speed).reverse()} />
+          </div>
         </div>
       </BlurOverlay>
     </div>
