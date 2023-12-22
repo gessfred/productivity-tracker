@@ -3,7 +3,7 @@ import { useAuth0 } from '@auth0/auth0-react'
 import { BlurOverlay } from '../foundation/Overlays'
 import './LandingPage.css'
 import { Background } from '../foundation/Backgrounds'
-import useAuth from '../foundation/Auth'
+import { login } from '../foundation/api'
 
 
 
@@ -31,7 +31,6 @@ function LandingGraph() {
 //TODO auth provider
 
 function LoginCard(onLogin) {
-  const { login } = useAuth()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   return (
@@ -40,14 +39,14 @@ function LoginCard(onLogin) {
       <input id='login-username' type='text' onChange={e => setUsername(e.target.value)} value={username} />
       <label htmlFor='login-password'>Password</label>
       <input id='login-password' type='password' onChange={e => setPassword(e.target.value)} value={password} />
-      <button id='login-button' onClick={() => login(username, password).catch(() => {})}>
+      <button id='login-button' onClick={() => login(username, password).then(() => onLogin()).catch(() => {})}>
         Login
       </button>
     </div>
   )
 }
 
-export function LandingPage({show}) {
+export function LandingPage({show, onLogin}) {
   
   return (
     <div id='landing-page'>
@@ -55,7 +54,7 @@ export function LandingPage({show}) {
       <BlurOverlay>
         <h1>Keylogg</h1>
         <span className='landing-page-motto'>Get the most from yourself</span>
-        <LoginCard />
+        <LoginCard onLogin={onLogin} />
         <div>
           <a className='landing-page-action-item' href='https://chrome.google.com/webstore/detail/mindspeed/caboikpoimjoinpcenfhpdabngepgmif'>
             Get the extension

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import useAuth from "../foundation/Auth"
+import api from '../foundation/api'
 import { Background } from "../foundation/Backgrounds"
 import { BlurOverlay } from "../foundation/Overlays"
 import { BarSelector } from "../foundation/Selectors"
@@ -65,16 +65,18 @@ function TypingDashboard({ data, labels, title }) {
 }
 
 export function Insights({show}) {
-  const { api, isAuthenticated } = useAuth()
-  const [typingData, setTypingData] = useState([])
-  const [topSites, setTopSites] = useState([])
+  const isAuthenticated = false
+  const [state, setState] = useState({})
+  const [] = useState([])
   useEffect(() => {
-    if(api) {
-      api.typingStats().then(setTypingData).catch(err => {})
-      api.topSites().then(console.log).catch(err => {})
-    }
+    (async () => {
+      const ts = (await api.get('/stats/top-sites')).data.data
+      const typing = JSON.parse((await api.get('/stats/typing')).data.stats)
+      setState({topSites: ts, typingData: typing})
+    })().then(() => {})
   }, [isAuthenticated])
-  console.log(typingData, topSites)
+  const typingData = state.typingData || []
+  const topSites = state.topSites || []
   return (
     <div>
       <Background />
@@ -96,9 +98,9 @@ export function Insights({show}) {
             ))}
           </div>
           <div id="typing-view">
-            <TypingDashboard title="Event count" labels={(typingData || []).map((x, i) => i)} data={(typingData || []).map(x => x.event_count).reverse()} />
-            <TypingDashboard title="Errors" labels={(typingData || []).map((x, i) => i)} data={(typingData || []).map(x => x.relative_error).reverse()} />
-            <TypingDashboard title="Typing speed" labels={(typingData || []).map((x, i) => i)} data={(typingData || []).map(x => x.speed).reverse()} />
+            <TypingDashboard title="Event count" labels={typingData.map((x, i) => i)} data={typingData.map(x => x.event_count).reverse()} />
+            <TypingDashboard title="Errors" labels={typingData.map((x, i) => i)} data={typingData.map(x => x.relative_error).reverse()} />
+            <TypingDashboard title="Typing speed" labels={typingData.map((x, i) => i)} data={typingData.map(x => x.speed).reverse()} />
           </div>
         </div>
       </BlurOverlay>
