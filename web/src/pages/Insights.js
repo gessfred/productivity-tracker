@@ -13,14 +13,16 @@ import {
   Title,
   Tooltip,
   Legend,
+  ArcElement
 } from 'chart.js'
-import { Line } from 'react-chartjs-2'
+import { Line, Pie, Doughnut } from 'react-chartjs-2'
 
 ChartJS.register(
   CategoryScale,
   LinearScale,
   PointElement,
   LineElement,
+  ArcElement,
   Title,
   Tooltip,
   Legend
@@ -64,6 +66,36 @@ function TypingDashboard({ data, labels, title }) {
   );
 }
 
+function TopSites({data}) {
+  // npm install chroma-js
+  //
+  const colors = Array.from({ length: data.length }).map((_, i) => 
+      `hsl(${i * (360 / data.length)}, 100%, 70%)`
+  )
+  return (
+    <Doughnut 
+      id="top-site-doughnut"
+      width={100}
+      height={100}
+      data={{
+        labels: data.map(({url}, i) => url),
+        datasets: [
+          {
+            id: 1,
+            label: '???',
+            data: data.map(({count}) => count),
+            borderWidth: 2,
+            backgroundColor: colors
+          }
+        ],
+      }}
+      options={{
+        responsive: true
+      }}
+    />
+  )
+}
+
 export function Insights({show}) {
   const isAuthenticated = false
   const [state, setState] = useState({})
@@ -89,13 +121,18 @@ export function Insights({show}) {
         <input type="text" id="insights-lang-request" />
         <div id="insights-feed">
           <h3>Top sites</h3>
-          <div>
-            {topSites.map(({url, count}) => (
-              <div>
-                <span>{url}</span>
-                <span>{count}</span>
-              </div>
-            ))}
+          <div id="typing-view">
+            <table>
+              <tbody>
+                {topSites.map(({url, count}) => (
+                  <tr>
+                    <td>{url}</td>
+                    <td>{count}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <TopSites data={topSites} />
           </div>
           <div id="typing-view">
             <TypingDashboard title="Event count" labels={typingData.map((x, i) => i)} data={typingData.map(x => x.event_count).reverse()} />

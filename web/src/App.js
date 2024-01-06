@@ -10,7 +10,6 @@ import api, { isAuthenticated } from './foundation/api'
 function Pages() {
   const [flag, setFlag] = useState(false)
   const authenticated = isAuthenticated()
-  console.log('auth', authenticated)
   return (
     <div className="App">
         {!authenticated && <LandingPage onLogin={() => setFlag(p => !p)} />}
