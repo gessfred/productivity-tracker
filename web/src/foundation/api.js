@@ -1,4 +1,5 @@
-import axios from 'axios';
+import axios from 'axios'
+import { useState, useEffect } from 'react'
 
 const url = 'https://keylogg.pub.gessfred.xyz/api'
 let failures = 0
@@ -70,10 +71,29 @@ export async function login(username, password) {
     const { access_token, refresh_token } = await response.json()
     localStorage.setItem('token', access_token)
     localStorage.setItem('refreshToken', refresh_token)
+    console.log("logged in")
 }
 
-export function isAuthenticated() {
+export function hasToken() {
     return localStorage.getItem('token') && localStorage.getItem('refreshToken')
 }
+
+
+
+export function useAuth() {
+  const [isAuthenticated, setIsAuthenticated] = useState(hasToken())
+  useEffect(() => {
+    const checkAuthStatus = () => {
+      console.log("checking auth status")
+      setIsAuthenticated(hasToken())
+    }
+    window.addEventListener('storage', checkAuthStatus)
+    return () => {
+      window.removeEventListener('storage', checkAuthStatus)
+    }
+  }, [])
+  return isAuthenticated
+}
+
 
 export default api

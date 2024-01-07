@@ -12,7 +12,7 @@ export function BarSelector({choices, onChoice}) {
     if(choices && choices.length > 0) {
       onChoice_(choices[0])
     } 
-  }, [choices])
+  }, [JSON.stringify(choices)])
   return (
     <div className="bar-selector-container">
       {choices.map(choice => <span key={choice} onClick={() => onChoice_(choice)} className={choiceClass(choice)}>{choice}</span>)}

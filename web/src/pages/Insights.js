@@ -98,25 +98,28 @@ function TopSites({data}) {
 
 export function Insights({show}) {
   const isAuthenticated = false
-  const [state, setState] = useState({})
+  const [state, setState] = useState({evalPeriod: '1 week'})
   const [] = useState([])
   useEffect(() => {
     (async () => {
-      const ts = (await api.get('/stats/top-sites')).data.data
-      const typing = JSON.parse((await api.get('/stats/typing')).data.stats)
-      setState({topSites: ts, typingData: typing})
-    })().then(() => {})
-  }, [isAuthenticated])
+      console.log("updating dashobard...", {params: {interval: state.evalPeriod}})
+      const ts = (await api.get('/stats/top-sites', {params: {interval: state.evalPeriod}}))
+      const typing = JSON.parse((await api.get('/stats/typing', {params: {lookback_time: state.evalPeriod}})).data.stats)
+      console.log("ok")
+      setState(p => Object.assign({}, p, {topSites: ts.data.data, typingData: typing}))
+    })().then(() => {}).catch(err => console.warn("couldn't refresh dashboard", err))
+  }, [isAuthenticated, state.evalPeriod])
   const typingData = state.typingData || []
   const topSites = state.topSites || []
+  // 
   return (
     <div>
       <Background />
       <BlurOverlay>
         <h1>Insights</h1>
         <BarSelector 
-          choices={['24m', '12m', '3d', '24h']}
-          onChoice={() => {}}
+          choices={['6 months', '1 month', '2 weeks', '1 week', '1 day', '12 hours']}
+          onChoice={(p) => setState(prev => Object.assign({}, prev, {evalPeriod: p}))}
         />
         <input type="text" id="insights-lang-request" />
         <div id="insights-feed">
