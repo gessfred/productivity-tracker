@@ -6,6 +6,7 @@ on:
     paths:
       - 'reports/**'
       - .github/workflows/reporting.yml
+      - aws/*
 
 jobs:
   build:
