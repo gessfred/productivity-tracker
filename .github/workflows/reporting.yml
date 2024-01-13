@@ -5,7 +5,7 @@ on:
     branches: [ main ]
     paths:
       - 'reports/**'
-      - .github/workflows/**
+      - .github/workflows/reporting.yml
 
 jobs:
   build:
