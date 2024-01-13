@@ -42,7 +42,8 @@ resource "aws_lambda_function" "reporting_lambda" {
     role = aws_iam_role.reporting_role.arn
     image_uri = "663234259711.dkr.ecr.us-east-1.amazonaws.com/hotkey/reporting:${var.github_sha}"
     package_type = "Image"
-    timeout = 120
+    timeout = 240
+    memory_size = 256
     environment {
         variables = {
             DB_CONNECTION_STRING = "postgresql://doadmin:${var.db_password}@db-postgresql-fra1-33436-do-user-6069962-0.b.db.ondigitalocean.com:25060/keylogger"
