@@ -118,7 +118,7 @@ export function Insights({show}) {
       <BlurOverlay>
         <h1>Insights</h1>
         <BarSelector 
-          choices={['6 months', '1 month', '2 weeks', '1 week', '1 day', '12 hours']}
+          choices={['3 months', '1 month', '2 weeks', '1 week', '1 day', '12 hours']}
           onChoice={(p) => setState(prev => Object.assign({}, prev, {evalPeriod: p}))}
         />
         <input type="text" id="insights-lang-request" />
