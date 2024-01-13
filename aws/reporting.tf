@@ -17,6 +17,16 @@ data "aws_iam_policy_document" "reporting_lambda_policy" {
 
     actions = ["sts:AssumeRole"]
   }
+
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "ses:*"
+    ]
+
+    resources = ["*"]
+  }
 }
 
 resource "aws_iam_role" "reporting_role" {
