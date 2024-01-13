@@ -9,8 +9,6 @@ import plotly.graph_objects as go
 import io
 import base64
 import plotly
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
 import boto3
 
 
