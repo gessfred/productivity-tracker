@@ -88,7 +88,7 @@ def send_email(dest, subject, html):
 
 
 
-def lambda_handler():
+def handler(event, context):
     wow = generate_week_over_week()
 
     report = f"""
