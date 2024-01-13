@@ -9,17 +9,12 @@ import plotly.graph_objects as go
 import io
 import base64
 import plotly
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
+import boto3
 
 
-DB_PORT = os.getenv("DB_PORT", 5432)
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_NAME = "keylogger"#os.getenv("DB_NAME")
-
-engine_url = f"postgresql://{DB_USER}:{DB_PASSWORD}@db-postgresql-fra1-33436-do-user-6069962-0.b.db.ondigitalocean.com:{DB_PORT}/{DB_NAME}"
-engine = create_engine(engine_url)
-
-#
+engine = create_engine(os.getenv("DB_CONNECTION_STRING"))
 
 SessionLocal = sessionmaker(bind=engine)
 db = SessionLocal()
@@ -52,7 +47,7 @@ def generate_week_over_week() -> str:
         from (select * from monthly union select * from weekly) all_reports
         where record_time >  now() - interval '1 month'
         group by horizon, to_char(record_time, 'Day'), extract(dow from record_time)
-        order by horizon, extract(dow from record_time)        
+        order by horizon, extract(dow from record_time)
     """, db.bind, params={"user_id": x_user_id, "interval": interval})#.to_dict(orient="records")
     fig = go.Figure(data=[
         go.Bar(name=f, x=data[data.horizon == f].day_of_week, y=data[data.horizon == f].event_count)
@@ -67,10 +62,38 @@ def generate_top_sites():
 def generate_speed_plot():
     pass
 
-wow = generate_week_over_week()
 
-with open("index.html", "w") as fd:
-    fd.write(f"""
+def send_email(dest, subject, html):
+    ses = boto3.client('ses')
+    response = ses.send_email(
+        Destination={
+            'ToAddresses': [
+                dest,
+            ],
+        },
+        Message={
+            'Body': {
+                'Html': {
+                    'Charset': 'UTF-8',
+                    'Data': html,
+                }
+            },
+            'Subject': {
+                'Charset': 'UTF-8',
+                'Data': subject,
+            },
+        },
+        Source='bot@hotkey.gessfred.xyz'
+    )
+
+    print(response)
+
+
+
+def lambda_handler():
+    wow = generate_week_over_week()
+
+    report = f"""
         <html>
             <body>
                 <h1>Your weekly HotKey report</h1>
@@ -78,4 +101,9 @@ with open("index.html", "w") as fd:
                 <img src="data:image/png;base64,{wow}" />
             </body>
         </html>
-    """)
+    """
+    send_email(
+        'gessfred@protonmail.com',
+        'HotKey weekly report',
+        report
+    )
