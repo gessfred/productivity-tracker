@@ -6,6 +6,13 @@ variable "db_password" {
   
 }
 
+data "aws_iam_policy_document" "reporting_ses_policy" {
+  statement {
+    actions   = ["ses:*"]
+    resources = ["*"]
+  }
+}
+
 data "aws_iam_policy_document" "reporting_lambda_policy" {
   statement {
     effect = "Allow"
@@ -17,21 +24,16 @@ data "aws_iam_policy_document" "reporting_lambda_policy" {
 
     actions = ["sts:AssumeRole"]
   }
-
-  statement {
-    effect = "Allow"
-
-    actions = [
-      "ses:*"
-    ]
-
-    resources = ["*"]
-  }
 }
 
 resource "aws_iam_role" "reporting_role" {
   name               = "hotkey-reporting-role"
   assume_role_policy = data.aws_iam_policy_document.reporting_lambda_policy.json
+
+  inline_policy {
+    name   = "ses_full_access_policy"
+    policy = data.aws_iam_policy_document.reporting_ses_policy.json
+  }
 }
 
 
