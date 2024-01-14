@@ -10,10 +10,9 @@ import io
 import base64
 import plotly
 import boto3
-
+import datetime
 
 engine = create_engine(os.getenv("DB_CONNECTION_STRING"))
-
 SessionLocal = sessionmaker(bind=engine)
 db = SessionLocal()
 
@@ -55,11 +54,76 @@ def generate_week_over_week() -> str:
     return fig_to_base64(fig)
 
 def generate_top_sites():
-    pass
+    x_user_id = 'fred'
+    interval = '1 week'
+    data = pd.read_sql("""
+        with keyevents as (
+            select 
+                (regexp_matches(source_url, '^(?:https?:\/\/)?(?:[^@\/\n]+@)?([^:\/\n]+)', 'g'))[1] as url,
+                *
+            from typing_events 
+            where 
+            user_id=%(user_id)s and 
+            record_time > now() - interval %(interval)s
+        )
+        select 
+            url, count(*) as event_count
+        from keyevents
+        group by url
+        order by count(*) desc
+        limit 10
+    """, db.bind, params={"user_id": x_user_id, "interval": interval})
+    fig = go.Figure(data=[go.Pie(labels=data.url, values=data.event_count, hole=.3)])
+    return fig_to_base64(fig)
 
-def generate_speed_plot():
-    pass
-
+def generate_time_of_day():
+    bucket_width = '1 hour'
+    x_user_id = 'fred'
+    interval = '1 week'
+    data = pd.read_sql("""
+    with user_keyevents as (
+      select * 
+      from typing_events
+      where 
+        user_id=%(user_id)s and 
+        record_time > now() - interval %(interval)s
+    ), bucketed as (
+        select 
+          date_bin(
+              %(bucket_width)s, 
+              record_time, 
+              date_trunc('day', record_time) 
+          ) as trunc,
+          date_trunc('day', record_time) as day
+        from user_keyevents 
+    ), strokes_times as (
+        select 
+          extract('hour' from trunc)::smallint as hour,
+          extract('minute' from trunc)::smallint as minute,
+          day
+        from bucketed
+    ), final_form as (
+        select
+            day,
+            hour,
+            minute,
+            count(*) as typing_count
+        from strokes_times REF
+        group by day, hour, minute
+        order by day, hour, minute asc
+    ), averaged as (
+        select 
+            hour, minute, avg(typing_count) as typing_count
+        from final_form
+        group by hour, minute
+    ) select 
+        lpad(hour::text, 2, '0') || ':' || lpad(minute::text, 2, '0') as time_of_day, 
+        typing_count
+    from averaged 
+    order by hour, minute
+    """, db.bind, params={"user_id": x_user_id, "interval": interval, 'bucket_width': bucket_width})
+    fig = px.bar(data, x="time_of_day", y="typing_count")
+    return fig_to_base64(fig)
 
 def send_email(dest, subject, html):
     ses = boto3.client('ses')
@@ -86,22 +150,34 @@ def send_email(dest, subject, html):
 
     print(response)
 
-
-
-def handler(event, context):
+def generate_report() -> str:
     wow = generate_week_over_week()
-
+    topsites = generate_top_sites()
+    time_of_day = generate_time_of_day()
     report = f"""
         <html>
             <body>
                 <h1>Your weekly HotKey report</h1>
+                <small>{datetime.datetime.now()}</small>
                 <h2>Week over week</h2>
                 <img src="data:image/png;base64,{wow}" />
+                <h2>Top sites</h2>
+                <img src="data:image/png;base64,{topsites}" />
+                <h2>Time of day</h2>
+                <img src="data:image/png;base64,{time_of_day}" />
             </body>
         </html>
     """
+    return report
+
+def handler(event, context):
+    report = generate_report()
     send_email(
         'gessfred@protonmail.com',
         'HotKey weekly report',
         report
     )
+
+if __name__ == '__main__':
+    with open("index.html", "w") as fd:
+        fd.write(generate_report())
