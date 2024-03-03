@@ -130,3 +130,5 @@ dmypy.json
 
 reports/data
 **/.terraform**
+
+**node_modules/
