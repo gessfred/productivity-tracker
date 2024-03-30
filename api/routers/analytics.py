@@ -142,3 +142,106 @@ def get_day_of_week_stats(request: Request, x_user_id: str = Header(default=None
   return {
     'data': data
   }
+
+@router.get("/api/stats/timebysession")
+def get_session_times(request: Request, x_user_id: str = Header(default=None), interval='1 month', db = Depends(get_db)):
+  # this does not work if there are no breaks...
+  data = pd.read_sql("""
+    with event_sequence as (
+        select 
+            session_id,
+            user_id,
+            source_url,
+            record_time as ts,
+            lag(record_time) over (
+                partition by user_id
+                order by record_time asc
+            ) as prev_ts
+        from typing_events 
+        where 
+            record_time > now() - interval %(interval)s and 
+            user_id=%(user_id)s
+        order by record_time desc
+    ),
+    session_breaks as (
+        select 
+            ts::date as session_date,
+            *, 
+            date_part('minute', ts - prev_ts) as prev_diff
+        from event_sequence
+        where date_part('minute', ts - prev_ts) > 3
+    ),
+    session_boundaries as (
+        select 
+            *, 
+            lag(ts) over (
+                partition by user_id
+                order by ts asc
+            ) as session_start,
+            prev_ts as session_end,
+            to_char(session_date, 'day') as day_of_week
+        from session_breaks
+        order by ts desc
+    )
+    select 
+        day_of_week,
+        user_id,
+        session_date,
+        date_part('minute', sum(session_end - session_start)) as total_work,
+        count(*) as number_of_sessions,
+        PERCENTILE_CONT(0.5) WITHIN GROUP(order by date_part('minute', session_end - session_start)) median_session_duration,
+        max(session_end) as sessions_end
+    from session_boundaries
+    group by user_id, session_date, day_of_week
+    order by session_date desc
+  """, db.bind, params={"user_id": x_user_id, "interval": interval}).to_dict(orient="records")
+  return {
+    "data": data
+  }
+
+@router.get("/api/stats/timeofday")
+def get_timeofday(request: Request, x_user_id: str = Header(default=None), interval='1 month', bucketing='1 hour', db = Depends(get_db)):
+  data = pd.read_sql("""
+    with user_keyevents as (
+      select * from typing_events
+      where 
+        user_id=%(user_id)s and 
+        record_time > now() - interval %(interval)s
+    ), bucketed as (
+        select 
+          date_bin(
+              interval '1 hour', 
+              record_time, 
+              date_trunc('day', record_time) 
+          ) as trunc,
+          date_trunc('day', record_time) as day
+        from user_keyevents 
+    ), strokes_times as (
+        select 
+          extract('hour' from trunc)::smallint as hour,
+          extract('minute' from trunc)::smallint as minute,
+          day
+        from bucketed
+    ), final_form as (
+        select
+            day,
+            hour,
+            minute,
+            count(*) as strokes_count
+        from strokes_times REF
+        group by day, hour, minute
+        order by day, hour, minute asc
+    ), averaged as (
+        select 
+            hour, minute, avg(strokes_count) as strokes_count
+        from final_form
+        group by hour, minute
+    ) select 
+        hour, minute, --lpad(hour::text, 2, '0')|| ':' || lpad(minute::text, 2, '0'), 
+        strokes_count 
+    from averaged 
+    order by hour, minute
+  """, con=db.bind, params={"user_id": x_user_id, "interval": interval, "bucketing": bucketing}).to_dict(orient="records")
+  return {
+    "data": data
+  }
