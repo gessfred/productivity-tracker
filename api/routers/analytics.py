@@ -192,13 +192,13 @@ def get_session_times(request: Request, x_user_id: str = Header(default=None), i
         day_of_week,
         user_id,
         session_date,
-        extract(epoch from sum(session_end - session_start)) / 3600 as total_hours,
-        extract(epoch from sum(session_end - session_start)) / 60 as total_minutes,
+        coalesce(extract(epoch from sum(session_end - session_start)) / 3600, 0.0) as total_hours,
+        coalesce(extract(epoch from sum(session_end - session_start)) / 60, 0.0) as total_minutes,
         sum(session_end - session_start) as total_time,
         count(*) as number_of_sessions,
-        percentile_cont(0.5) within group(
+        coalesce(percentile_cont(0.5) within group(
           order by extract(epoch from session_end - session_start) / 60
-        ) median_session_duration,
+        ), 0.0) median_session_duration,
         max(session_end) as sessions_end
     from session_boundaries
     group by user_id, session_date, day_of_week
