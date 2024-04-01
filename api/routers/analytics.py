@@ -156,7 +156,11 @@ def get_session_times(request: Request, x_user_id: str = Header(default=None), i
             lag(record_time) over (
                 partition by user_id
                 order by record_time asc
-            ) as prev_ts
+            ) as prev_ts,
+            row_number() over (
+                partition by user_id
+                order by record_time desc
+            ) as record_rank
         from typing_events 
         where 
             record_time > now() - interval %(interval)s and 
@@ -166,10 +170,11 @@ def get_session_times(request: Request, x_user_id: str = Header(default=None), i
     session_breaks as (
         select 
             ts::date as session_date,
-            *, 
-            date_part('minute', ts - prev_ts) as prev_diff
+            *
         from event_sequence
-        where date_part('minute', ts - prev_ts) > 3
+        where 
+          extract(epoch from ts - prev_ts) / 60 > 3 or 
+          (record_rank = 1 and extract(epoch from now() - ts) / 60 < 3) -- identifies current session
     ),
     session_boundaries as (
         select 
@@ -187,9 +192,13 @@ def get_session_times(request: Request, x_user_id: str = Header(default=None), i
         day_of_week,
         user_id,
         session_date,
-        date_part('minute', sum(session_end - session_start)) as total_work,
+        extract(epoch from sum(session_end - session_start)) / 3600 as total_hours,
+        extract(epoch from sum(session_end - session_start)) / 60 as total_minutes,
+        sum(session_end - session_start) as total_time,
         count(*) as number_of_sessions,
-        PERCENTILE_CONT(0.5) WITHIN GROUP(order by date_part('minute', session_end - session_start)) median_session_duration,
+        percentile_cont(0.5) within group(
+          order by extract(epoch from session_end - session_start) / 60
+        ) median_session_duration,
         max(session_end) as sessions_end
     from session_boundaries
     group by user_id, session_date, day_of_week

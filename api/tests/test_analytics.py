@@ -86,7 +86,7 @@ def test_session_times_trivial(postgres_db):
     )
     assert res.status_code == 200
     stats = res.json()["data"]
-    #TODO assert len(stats) == 1, stats
+    assert len(stats) == 1, stats
 
 def test_timeofday_trivial(postgres_db):
     """
