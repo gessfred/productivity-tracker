@@ -13,7 +13,7 @@ os.environ["JWT_SECRET_KEY"] = "oth42obgtwknbwl2ngl2np2non24ongtonh2gn2ngpwn"
 def postgres_db():
     # Start a new PostgreSQL instance in Docker
     container_id = subprocess.getoutput(
-        "docker run -d -e POSTGRES_PASSWORD=secret -e POSTGRES_DB=test_db -p 5432:5432 postgres:13"
+        "docker run -d -e POSTGRES_PASSWORD=secret -e POSTGRES_DB=test_db -p 5432:5432 postgres:14"
     )
     print(f"Started PostgreSQL container: {container_id}")
 

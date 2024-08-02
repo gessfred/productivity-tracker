@@ -59,10 +59,53 @@ def test_typing_stats(postgres_db):
         json={"events": test_request},
         headers=headers
     )
-    assert res.status_code
+    assert res.status_code == 200
     res = client.get("/api/stats/typing",
         headers=headers
     )
     assert res.status_code == 200
     stats = res.json()["stats"]
     assert len(stats) == 2, stats
+
+def test_session_times_trivial(postgres_db):
+    """
+    test 1 single session
+    """
+    # setup
+    headers = get_test_user()
+    test_request = [generate_event("google.com") for _ in range(10)] + [generate_event("facebook.com")]
+    res = client.post(
+        "/api/events", 
+        json={"events": test_request},
+        headers=headers
+    )
+    assert res.status_code
+
+    res = client.get("/api/stats/timebysession",
+        headers=headers
+    )
+    assert res.status_code == 200
+    stats = res.json()["data"]
+    assert len(stats) == 1, stats
+
+def test_timeofday_trivial(postgres_db):
+    """
+    test 1 single session
+    """
+    # setup
+    headers = get_test_user()
+    test_request = [generate_event("google.com") for _ in range(10)] + [generate_event("facebook.com")]
+    res = client.post(
+        "/api/events", 
+        json={"events": test_request},
+        headers=headers
+    )
+    assert res.status_code
+
+    res = client.get("/api/stats/timeofday",
+        headers=headers
+    )
+    assert res.status_code == 200
+    stats = res.json()["data"]
+    assert len(stats) > 0
+    #TODO assert len(stats) == 1, stats
