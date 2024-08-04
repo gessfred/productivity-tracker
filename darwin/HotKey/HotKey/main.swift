@@ -32,47 +32,7 @@ func saveToCSV(filePath: String, data: [(app: String, category: String, timestam
         print("Failed to save file: \(error)")
     }
 }
-
-func getSystemUptimeISO8601() -> String {
-    let uptimeSeconds = ProcessInfo.processInfo.systemUptime
-    let bootTime = Date(timeIntervalSinceNow: -uptimeSeconds)
-    
-    let dateFormatter = ISO8601DateFormatter()
-    dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-    
-    return dateFormatter.string(from: bootTime)
-}
-
-func getSystemUptimeUnixEpoch() -> String {
-    let uptimeSeconds = ProcessInfo.processInfo.systemUptime
-    let bootTime = Date(timeIntervalSinceNow: -uptimeSeconds)
-    let unixEpochTime = bootTime.timeIntervalSince1970
-    
-    return String(format: "%.9f", unixEpochTime) // 9 decimal places for nanosecond precision
-}
-
-func getHighPrecisionUnixEpochTime() -> String {
-    let uptimeSeconds = ProcessInfo.processInfo.systemUptime
-    let currentTime = Date().timeIntervalSince1970
-    let preciseTime = currentTime - uptimeSeconds
-    
-    return String(format: "%.9f", preciseTime)
-}
-
-func highPrecisionTimestampString() -> String {
-    var info = mach_timebase_info_data_t()
-    mach_timebase_info(&info)
-
-    let now = mach_absolute_time()
-    let nanoseconds = now * UInt64(info.numer) / UInt64(info.denom)
-    print(nanoseconds)
-    let date = Date(timeIntervalSince1970: Double(nanoseconds) / 1_000_000_000)
-    print(date)
-    let formatter = ISO8601DateFormatter()
-    formatter.formatOptions = [.withFractionalSeconds]
-    return formatter.string(from: date)
-}
-
+// https://forums.swift.org/t/recommended-way-to-measure-time-in-swift/33326
 let eventMask = CGEventMask((1 << CGEventType.keyDown.rawValue) | (1 << CGEventType.keyUp.rawValue))
 guard let eventTap = CGEvent.tapCreate(
     tap: .cgSessionEventTap, // cghidEventTap
@@ -133,31 +93,3 @@ let runLoopMode = CFRunLoopMode.commonModes
 CFRunLoopAddSource(runLoop, runLoopSource, runLoopMode)
 CGEvent.tapEnable(tap: eventTap, enable: true)
 CFRunLoopRun()
-
-/*// Define a function to perform the desired action
-func printFrontmostApplication() {
-    guard let frontmost = NSWorkspace.shared.frontmostApplication else {
-        print("Failed to get frontmost application from polling")
-        return
-    }
-
-    print(frontmost.localizedName ?? "Unknown Application")
-}
-
-// Schedule a timer to call printFrontmostApplication every 10 seconds
-Timer.scheduledTimer(withTimeInterval: 10.0, repeats: true) { _ in
-    printFrontmostApplication()
-}
-
-// Start the run loop to allow the timer to fire
-RunLoop.current.run()*/
-
-
-/*guard*/ //let frontmost = NSWorkspace.shared.frontmostApplication
-
-/*else {
-  print("Failed to get frontmost application from polling")
-    throw Error()
-}*/
-
-//print(frontmost)
