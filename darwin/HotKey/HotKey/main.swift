@@ -1,0 +1,163 @@
+//
+//  main.swift
+//  HotKey
+//
+//  Created by Frédéric Gessler on 05.03.2024.
+//
+
+import Foundation
+import Cocoa
+import MachO
+
+var keyEvents: [(app: String, category: String, timestamp: String, interval: UInt64)] = []
+var previousTime: UInt64 = mach_absolute_time()
+
+let queue = DispatchQueue(label: "com.yourapp.keyEventQueue")
+
+let tsFormatter = ISO8601DateFormatter()
+tsFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds, .withTimeZone]
+tsFormatter.timeZone = TimeZone.current
+
+func saveToCSV(filePath: String, data: [(app: String, category: String, timestamp: String, interval: UInt64)]) {
+    var csvString = "Timestamp,Interval_ns,SeqNum,App,Category\n"
+    
+    for event in data {
+        
+        csvString.append("\(event.timestamp),\(event.interval),0,\(event.app),\(event.category)\n")
+    }
+    
+    do {
+        try csvString.write(toFile: filePath, atomically: true, encoding: .utf8)
+    } catch {
+        print("Failed to save file: \(error)")
+    }
+}
+
+func getSystemUptimeISO8601() -> String {
+    let uptimeSeconds = ProcessInfo.processInfo.systemUptime
+    let bootTime = Date(timeIntervalSinceNow: -uptimeSeconds)
+    
+    let dateFormatter = ISO8601DateFormatter()
+    dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    
+    return dateFormatter.string(from: bootTime)
+}
+
+func getSystemUptimeUnixEpoch() -> String {
+    let uptimeSeconds = ProcessInfo.processInfo.systemUptime
+    let bootTime = Date(timeIntervalSinceNow: -uptimeSeconds)
+    let unixEpochTime = bootTime.timeIntervalSince1970
+    
+    return String(format: "%.9f", unixEpochTime) // 9 decimal places for nanosecond precision
+}
+
+func getHighPrecisionUnixEpochTime() -> String {
+    let uptimeSeconds = ProcessInfo.processInfo.systemUptime
+    let currentTime = Date().timeIntervalSince1970
+    let preciseTime = currentTime - uptimeSeconds
+    
+    return String(format: "%.9f", preciseTime)
+}
+
+func highPrecisionTimestampString() -> String {
+    var info = mach_timebase_info_data_t()
+    mach_timebase_info(&info)
+
+    let now = mach_absolute_time()
+    let nanoseconds = now * UInt64(info.numer) / UInt64(info.denom)
+    print(nanoseconds)
+    let date = Date(timeIntervalSince1970: Double(nanoseconds) / 1_000_000_000)
+    print(date)
+    let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [.withFractionalSeconds]
+    return formatter.string(from: date)
+}
+
+let eventMask = CGEventMask((1 << CGEventType.keyDown.rawValue) | (1 << CGEventType.keyUp.rawValue))
+guard let eventTap = CGEvent.tapCreate(
+    tap: .cgSessionEventTap, // cghidEventTap
+    place: .headInsertEventTap,
+    options: .defaultTap,
+    eventsOfInterest: eventMask,
+    callback: { (proxy, type, event, refcon) -> Unmanaged<CGEvent>? in
+        let frontmost = NSWorkspace.shared.frontmostApplication
+        var keyCat = "Default"
+        if type == .keyDown {
+            let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
+            // Define key categories
+            switch keyCode {
+            case 49: // Space
+                keyCat = "Spacce"
+            case 36, 76: // Enter and Numpad Enter
+                keyCat = "Enter"
+            case 0...9, 11...28, 31...50, 65, 67, 69, 75, 78, 81...92, 96...103, 105...107, 109, 111...117, 119...126:
+                keyCat = "Alphanumeric"
+            default:
+                keyCat = "Other"
+            }
+        } else if type == .flagsChanged {
+            keyCat = "Modifier"
+        }
+        //print("\(String(describing:frontmost!.localizedName)),\(keyCat)")
+        queue.async {
+            //let dateFormatter = ISO8601DateFormatter()
+            //let dateStr = dateFormatter.string(from: event.timestamp)
+            var ts = tsFormatter.string(from: Date())
+            let now = mach_absolute_time()
+            let diff = now - previousTime
+            //print(frontmost?.processIdentifier)
+            previousTime = now
+            keyEvents.append((
+                app: String(describing:frontmost?.localizedName ?? ".unknown" ),
+                category: keyCat,
+                timestamp: ts,
+                diff
+            ))
+            if keyEvents.count > 20 {
+                let now  = Int(Date().timeIntervalSince1970)
+                saveToCSV(filePath: "/Users/fredericgessler/Documents/bootstrap/productivity-tracker/darwin/HotKey/data/\(now).csv", data: keyEvents)
+                keyEvents = []
+            }
+        }
+        return Unmanaged.passRetained(event)
+    },
+    userInfo: nil
+) else {
+    print("Failed to create event tap")
+    exit(1)
+}
+
+let runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, eventTap, 0)
+let runLoop = CFRunLoopGetCurrent()
+let runLoopMode = CFRunLoopMode.commonModes
+CFRunLoopAddSource(runLoop, runLoopSource, runLoopMode)
+CGEvent.tapEnable(tap: eventTap, enable: true)
+CFRunLoopRun()
+
+/*// Define a function to perform the desired action
+func printFrontmostApplication() {
+    guard let frontmost = NSWorkspace.shared.frontmostApplication else {
+        print("Failed to get frontmost application from polling")
+        return
+    }
+
+    print(frontmost.localizedName ?? "Unknown Application")
+}
+
+// Schedule a timer to call printFrontmostApplication every 10 seconds
+Timer.scheduledTimer(withTimeInterval: 10.0, repeats: true) { _ in
+    printFrontmostApplication()
+}
+
+// Start the run loop to allow the timer to fire
+RunLoop.current.run()*/
+
+
+/*guard*/ //let frontmost = NSWorkspace.shared.frontmostApplication
+
+/*else {
+  print("Failed to get frontmost application from polling")
+    throw Error()
+}*/
+
+//print(frontmost)
