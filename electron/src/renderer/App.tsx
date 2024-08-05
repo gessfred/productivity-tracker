@@ -77,14 +77,30 @@ function StatusBar() {
   )
 }
 
+function formatDuration(seconds: number): string {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainingSeconds = Math.floor(seconds % 60);
+
+  const hoursStr = hours > 0 ? `${hours}h ` : '';
+  const minutesStr = minutes > 0 ? `${minutes}min ` : '';
+  const secondsStr = remainingSeconds > 0 ? `${remainingSeconds}s` : '';
+
+  return `${hoursStr}${minutesStr}${secondsStr}`.trim();
+}
+
 function Home() {
-  const [data, setData] = useState({activeTime: [], activeTimeByApp: []})
+  const [data, setData] = useState({activeTimeByApp: [], activeTimeByAppAggregate: [], userSessions: []})
   useEffect(() => {
     const timer = setInterval(async () => {
-      const res = await fetch("http://localhost:3000/activetime/byapp")
-      const activeTime = await fetch("http://localhost:3000/activetime")
-      console.log("ActiveTime", )
-      setData({activeTimeByApp: await res.json(), activeTime: await activeTime.json()})
+      const activeTimeByAppAggregate = await fetch("http://localhost:3000/activetime/byapp/aggregate")
+      const activeTimeByApp = await fetch("http://localhost:3000/activetime/byapp")
+      const userSessions = await fetch("http://localhost:3000/activetime/sessions")
+      setData({
+        activeTimeByAppAggregate: await activeTimeByAppAggregate.json(), 
+        activeTimeByApp: await activeTimeByApp.json(), 
+        userSessions: await userSessions.json()
+      })
     }, 10 * 1000)
     return () => {
       clearInterval(timer)
@@ -95,9 +111,10 @@ function Home() {
     <div>
       <h1>HotKey</h1>
       <h2>Active Time</h2>
-      <BarChart data={data.activeTimeByApp} />
+      <span>{formatDuration(data?.userSessions?.map((s: any) => s.duration).reduce((a: number, b: number) => a + b, 0))}</span>
+      <BarChart data={data.activeTimeByAppAggregate} />
       <GanttChart 
-        data={data.activeTime}
+        data={data.activeTimeByApp}
         width={500}
         height={300}
       />
