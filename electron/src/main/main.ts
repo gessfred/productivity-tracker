@@ -62,7 +62,7 @@ const createServer = () => {
         select 
             ts::date as session_date,
             *,
-            sum((coalesce(diff_s > 3, true))::int) over (
+            sum((coalesce(diff_s > 10, true))::int) over (
                 partition by app
                 order by ts asc
             ) as session_number

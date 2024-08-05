@@ -6,6 +6,7 @@ import { Bar } from '@visx/shape'
 import { AxisLeft } from '@visx/axis'
 
 import { scaleBand, scaleLinear } from '@visx/scale'
+import GanttChart from './Gantt'
 
 
 const BarChart = (props: any) => {
@@ -77,11 +78,13 @@ function StatusBar() {
 }
 
 function Home() {
-  const [data, setData] = useState([])
+  const [data, setData] = useState({activeTime: [], activeTimeByApp: []})
   useEffect(() => {
     const timer = setInterval(async () => {
       const res = await fetch("http://localhost:3000/activetime/byapp")
-      setData(await res.json())
+      const activeTime = await fetch("http://localhost:3000/activetime")
+      console.log("ActiveTime", )
+      setData({activeTimeByApp: await res.json(), activeTime: await activeTime.json()})
     }, 10 * 1000)
     return () => {
       clearInterval(timer)
@@ -92,8 +95,13 @@ function Home() {
     <div>
       <h1>HotKey</h1>
       <h2>Active Time</h2>
-      <BarChart data={data} />
-      <StatusBar />
+      <BarChart data={data.activeTimeByApp} />
+      <GanttChart 
+        data={data.activeTime}
+        width={500}
+        height={300}
+      />
+      <StatusBar  />
     </div>
   )
 }
