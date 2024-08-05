@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { MemoryRouter as Router, Routes, Route } from 'react-router-dom'
 import './App.css'
 import { Group } from '@visx/group'
+import { Text } from '@visx/text'
 import { Bar } from '@visx/shape'
 import { AxisLeft } from '@visx/axis'
 
@@ -13,7 +14,7 @@ const BarChart = (props: any) => {
   const data = props.data
   const width = 500;
   const height = 300;
-  const margin = { top: 20, right: 20, bottom: 20, left: 60 };
+  const margin = { top: 20, right: 128, bottom: 20, left: 60 };
 
   const xMax = width - margin.left - margin.right;
   const yMax = height - margin.top - margin.bottom;
@@ -32,16 +33,27 @@ const BarChart = (props: any) => {
     <svg width={width} height={height}>
       <Group top={margin.top} left={margin.left}>
         {data.map((d: any) => (
-          <Bar
-            key={d.App}
-            x={margin.left}
-            y={yScale(d.App)}
-            width={xScale(d.total_time)}
-            height={yScale.bandwidth()}
-            fill="#FF5733"
-            rx={4}
-            ry={4}
-          />
+          <>
+            <Bar
+              key={d.App}
+              x={margin.left}
+              y={yScale(d.App)}
+              width={xScale(d.total_time)}
+              height={yScale.bandwidth()}
+              fill="#FF5733"
+              rx={4}
+              ry={4}
+            />
+            <Text
+              x={xScale(d.total_time) + 60} // Adjust offset as needed
+              y={yScale(d.App) + yScale.bandwidth() / 2}
+              textAnchor="start"
+              dominantBaseline="central"
+              fill="black"
+            >
+              {formatDuration(Math.floor(d.total_time))}
+            </Text>
+          </>
         ))}
         <AxisLeft
           top={0}
