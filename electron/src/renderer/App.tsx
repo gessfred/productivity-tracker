@@ -1,49 +1,53 @@
-import { MemoryRouter as Router, Routes, Route } from 'react-router-dom';
-import icon from '../../assets/icon.svg';
-import './App.css';
+import { useState, useEffect } from 'react'
+import { MemoryRouter as Router, Routes, Route } from 'react-router-dom'
+import './App.css'
 
-function Hello() {
+function StatusBar() {
+  const [status, setStatus] = useState<any>() 
+  useEffect(() => {
+    console.log("setting effect")
+    const timer = setInterval(async () => {
+      console.log("status ping")
+      const res = await fetch("http://localhost:3000/status")
+      setStatus(await res.json())
+    }, 10 * 1000)
+    return () => {
+      clearInterval(timer)
+    }
+  }, [])
+  console.log(status)
+  return (
+    <div className='statusbar-container'>
+      {status?.last_event}
+    </div>
+  )
+}
+
+function Home() {
+  const [data, setData] = useState([])
+  useEffect(() => {
+    const timer = setInterval(async () => {
+      const res = await fetch("http://localhost:3000/activetime/byapp")
+      setData(await res.json())
+    }, 10 * 1000)
+    return () => {
+      clearInterval(timer)
+    }
+  }, [])
+  console.log("data:", data)
   return (
     <div>
-      <div className="Hello">
-        <img width="200" alt="icon" src={icon} />
-      </div>
-      <h1>electron-react-boilerplate</h1>
-      <div className="Hello">
-        <a
-          href="https://electron-react-boilerplate.js.org/"
-          target="_blank"
-          rel="noreferrer"
-        >
-          <button type="button">
-            <span role="img" aria-label="books">
-              📚
-            </span>
-            Read our docs
-          </button>
-        </a>
-        <a
-          href="https://github.com/sponsors/electron-react-boilerplate"
-          target="_blank"
-          rel="noreferrer"
-        >
-          <button type="button">
-            <span role="img" aria-label="folded hands">
-              🙏
-            </span>
-            Donate
-          </button>
-        </a>
-      </div>
+      hello world
+      <StatusBar />
     </div>
-  );
+  )
 }
 
 export default function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Hello />} />
+        <Route path="/" element={<Home />} />
       </Routes>
     </Router>
   );

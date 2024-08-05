@@ -62,7 +62,7 @@ guard let eventTap = CGEvent.tapCreate(
         queue.async {
             //let dateFormatter = ISO8601DateFormatter()
             //let dateStr = dateFormatter.string(from: event.timestamp)
-            var ts = tsFormatter.string(from: Date())
+            let ts = tsFormatter.string(from: Date())
             let now = mach_absolute_time()
             let diff = now - previousTime
             //print(frontmost?.processIdentifier)
@@ -73,7 +73,7 @@ guard let eventTap = CGEvent.tapCreate(
                 timestamp: ts,
                 diff
             ))
-            if keyEvents.count > 20 {
+            if keyEvents.count > 100 {
                 let now  = Int(Date().timeIntervalSince1970)
                 saveToCSV(filePath: "/Users/fredericgessler/Documents/bootstrap/productivity-tracker/darwin/HotKey/data/\(now).csv", data: keyEvents)
                 keyEvents = []
