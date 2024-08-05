@@ -1,6 +1,59 @@
 import { useState, useEffect } from 'react'
 import { MemoryRouter as Router, Routes, Route } from 'react-router-dom'
 import './App.css'
+import { Group } from '@visx/group'
+import { Bar } from '@visx/shape'
+import { AxisLeft } from '@visx/axis'
+
+import { scaleBand, scaleLinear } from '@visx/scale'
+
+
+const BarChart = (props: any) => {
+  const data = props.data
+  const width = 500;
+  const height = 300;
+  const margin = { top: 20, right: 20, bottom: 20, left: 60 };
+
+  const xMax = width - margin.left - margin.right;
+  const yMax = height - margin.top - margin.bottom;
+
+  const xScale = scaleLinear({
+    domain: [0, Math.max(...data.map((d: any) => d.total_time))],
+    range: [0, xMax],
+  })
+
+  const yScale = scaleBand({
+    domain: data.map((d: any) => d.App),
+    range: [0, yMax],
+    padding: 0.4,
+  })
+  return (
+    <svg width={width} height={height}>
+      <Group top={margin.top} left={margin.left}>
+        {data.map((d: any) => (
+          <Bar
+            key={d.App}
+            x={margin.left}
+            y={yScale(d.App)}
+            width={xScale(d.total_time)}
+            height={yScale.bandwidth()}
+            fill="#FF5733"
+            rx={4}
+            ry={4}
+          />
+        ))}
+        <AxisLeft
+          top={0}
+          left={margin.left}
+          scale={yScale}
+          hideAxisLine={true}
+          hideTicks={true}
+        />
+      </Group>
+    </svg>
+  );
+};
+
 
 function StatusBar() {
   const [status, setStatus] = useState<any>() 
@@ -37,7 +90,9 @@ function Home() {
   console.log("data:", data)
   return (
     <div>
-      hello world
+      <h1>HotKey</h1>
+      <h2>Active Time</h2>
+      <BarChart data={data} />
       <StatusBar />
     </div>
   )
