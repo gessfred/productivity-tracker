@@ -101,8 +101,15 @@ function formatDuration(seconds: number): string {
   return `${hoursStr}${minutesStr}${secondsStr}`.trim();
 }
 
+function getCurrentTime() {
+  const now = new Date();
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  return `${hours}:${minutes}`;
+}
+
 function Home() {
-  const [data, setData] = useState({activeTimeByApp: [], activeTimeByAppAggregate: [], userSessions: []})
+  const [data, setData] = useState({activeTimeByApp: [], activeTimeByAppAggregate: [], userSessions: [], currentTime: getCurrentTime()})
   useEffect(() => {
     const timer = setInterval(async () => {
       const activeTimeByAppAggregate = await fetch("http://localhost:3000/activetime/byapp/aggregate")
@@ -111,7 +118,8 @@ function Home() {
       setData({
         activeTimeByAppAggregate: await activeTimeByAppAggregate.json(), 
         activeTimeByApp: await activeTimeByApp.json(), 
-        userSessions: await userSessions.json()
+        userSessions: await userSessions.json(),
+        currentTime: getCurrentTime()
       })
     }, 10 * 1000)
     return () => {
@@ -122,8 +130,13 @@ function Home() {
   return (
     <div>
       <h1>HotKey</h1>
-      <h2>Active Time</h2>
-      <span>{formatDuration(data?.userSessions?.map((s: any) => s.duration).reduce((a: number, b: number) => a + b, 0))}</span>
+      <div className='app-header'>
+        <div className='today-card card'>
+          <span>Today</span>
+          <span>{data.currentTime}</span>
+        </div>
+        <span id='active-time-total' className='card'>{formatDuration(data?.userSessions?.map((s: any) => s.duration).reduce((a: number, b: number) => a + b, 0))}</span>
+      </div>
       <BarChart data={data.activeTimeByAppAggregate} />
       <GanttChart 
         data={data.activeTimeByApp}
