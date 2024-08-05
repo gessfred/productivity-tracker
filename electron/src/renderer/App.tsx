@@ -108,20 +108,23 @@ function getCurrentTime() {
   return `${hours}:${minutes}`;
 }
 
+const fetchTodayData = async () => {
+  const activeTimeByAppAggregate = await fetch("http://localhost:3000/activetime/byapp/aggregate")
+  const activeTimeByApp = await fetch("http://localhost:3000/activetime/byapp")
+  const userSessions = await fetch("http://localhost:3000/activetime/sessions")
+  return {
+    activeTimeByAppAggregate: await activeTimeByAppAggregate.json(), 
+    activeTimeByApp: await activeTimeByApp.json(), 
+    userSessions: await userSessions.json(),
+    currentTime: getCurrentTime()
+  }
+}
+
 function Home() {
   const [data, setData] = useState({activeTimeByApp: [], activeTimeByAppAggregate: [], userSessions: [], currentTime: getCurrentTime()})
   useEffect(() => {
-    const timer = setInterval(async () => {
-      const activeTimeByAppAggregate = await fetch("http://localhost:3000/activetime/byapp/aggregate")
-      const activeTimeByApp = await fetch("http://localhost:3000/activetime/byapp")
-      const userSessions = await fetch("http://localhost:3000/activetime/sessions")
-      setData({
-        activeTimeByAppAggregate: await activeTimeByAppAggregate.json(), 
-        activeTimeByApp: await activeTimeByApp.json(), 
-        userSessions: await userSessions.json(),
-        currentTime: getCurrentTime()
-      })
-    }, 10 * 1000)
+    const timer = setInterval(async () => setData(await fetchTodayData()), 10 * 1000)
+    fetchTodayData().then(setData)
     return () => {
       clearInterval(timer)
     }
