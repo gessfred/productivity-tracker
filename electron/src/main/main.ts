@@ -133,6 +133,7 @@ const createServer = () => {
   app.get("/activetime/byapp", (req: any, res: any) => {
     query(`
       select * from active_sessions_by_app
+      where session_start > now() - interval '3 hours'
     `, res, "full")
   })
 

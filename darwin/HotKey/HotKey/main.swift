@@ -9,7 +9,7 @@ import Foundation
 import Cocoa
 import MachO
 
-var keyEvents: [(app: String, category: String, timestamp: String, interval: UInt64)] = []
+var keyEvents: [(app: String, title: String, category: String, timestamp: String, interval: UInt64)] = []
 var previousTime: UInt64 = mach_absolute_time()
 
 let queue = DispatchQueue(label: "com.yourapp.keyEventQueue")
@@ -18,12 +18,75 @@ let tsFormatter = ISO8601DateFormatter()
 tsFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds, .withTimeZone]
 tsFormatter.timeZone = TimeZone.current
 
-func saveToCSV(filePath: String, data: [(app: String, category: String, timestamp: String, interval: UInt64)]) {
-    var csvString = "Timestamp,Interval_ns,SeqNum,App,Category\n"
+import ApplicationServices
+
+func getActiveWindowTitle() -> String? {
+    // Get the frontmost application
+    guard let frontmostApp = NSWorkspace.shared.frontmostApplication else {
+        return nil
+    }
+    
+    let frontmostAppPID = frontmostApp.processIdentifier
+    
+    // Create an AXUIElement for the application
+    let appElement = AXUIElementCreateApplication(frontmostAppPID)
+    
+    // Get the focused window of the application
+    var focusedWindow: AnyObject?
+    let result = AXUIElementCopyAttributeValue(appElement, kAXFocusedWindowAttribute as CFString, &focusedWindow)
+    
+    guard result == .success, let windowElement = focusedWindow else {
+        return nil
+    }
+    
+    // Get the title of the focused window
+    var windowTitle: AnyObject?
+    let titleResult = AXUIElementCopyAttributeValue(windowElement as! AXUIElement, kAXTitleAttribute as CFString, &windowTitle)
+    
+    if titleResult == .success, let title = windowTitle as? String {
+        return title
+    }
+    
+    return nil
+}
+
+
+
+func getActiveWindowName() -> String? {
+    // Get the frontmost application
+    guard let frontmostApp = NSWorkspace.shared.frontmostApplication else {
+        print("no frontmost app")
+        return nil
+    }
+    
+    let frontmostAppPID = frontmostApp.processIdentifier
+    
+    // Get the list of windows
+    if let windowList = CGWindowListCopyWindowInfo(.optionOnScreenOnly, kCGNullWindowID) as NSArray? {
+        for window in windowList {
+            if let windowInfo = window as? NSDictionary {
+                // Check if the window belongs to the frontmost application
+                if let windowOwnerPID = windowInfo[kCGWindowOwnerPID] as? pid_t,
+                   windowOwnerPID == frontmostAppPID {
+                    print("owner: \(windowInfo)")
+                    // Get the window title
+                    if let windowTitle = windowInfo[kCGWindowOwnerName] as? String {
+                        return windowTitle
+                    }
+                }
+            }
+        }
+    }
+    
+    return nil
+}
+
+func saveToCSV(filePath: String, data: [(app: String, title: String, category: String, timestamp: String, interval: UInt64)]) {
+    var csvString = "Timestamp,Interval_ns,SeqNum,App,Title,Category\n"
     
     for event in data {
         
-        csvString.append("\(event.timestamp),\(event.interval),0,\(event.app),\(event.category)\n")
+        csvString.append("\(event.timestamp),\(event.interval),0,\(event.app),\(event.title),\(event.category)\n")
     }
     
     do {
@@ -60,6 +123,7 @@ guard let eventTap = CGEvent.tapCreate(
         }
         //print("\(String(describing:frontmost!.localizedName)),\(keyCat)")
         queue.async {
+            print("Active window: \(getActiveWindowTitle())")
             //let dateFormatter = ISO8601DateFormatter()
             //let dateStr = dateFormatter.string(from: event.timestamp)
             let ts = tsFormatter.string(from: Date())
@@ -69,6 +133,7 @@ guard let eventTap = CGEvent.tapCreate(
             previousTime = now
             keyEvents.append((
                 app: String(describing:frontmost?.localizedName ?? ".unknown" ),
+                title: getActiveWindowTitle() ?? "null",
                 category: keyCat,
                 timestamp: ts,
                 diff
