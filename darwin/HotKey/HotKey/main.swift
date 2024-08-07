@@ -86,7 +86,7 @@ func saveToCSV(filePath: String, data: [(app: String, title: String, category: S
     
     for event in data {
         
-        csvString.append("\(event.timestamp),\(event.interval),0,\(event.app),\(event.title),\(event.category)\n")
+        csvString.append("\(event.timestamp),\(event.interval),0,\"\(event.app)\",\"\(event.title)\",\(event.category)\n")
     }
     
     do {
@@ -121,15 +121,10 @@ guard let eventTap = CGEvent.tapCreate(
         } else if type == .flagsChanged {
             keyCat = "Modifier"
         }
-        //print("\(String(describing:frontmost!.localizedName)),\(keyCat)")
         queue.async {
-            print("Active window: \(getActiveWindowTitle())")
-            //let dateFormatter = ISO8601DateFormatter()
-            //let dateStr = dateFormatter.string(from: event.timestamp)
             let ts = tsFormatter.string(from: Date())
             let now = mach_absolute_time()
             let diff = now - previousTime
-            //print(frontmost?.processIdentifier)
             previousTime = now
             keyEvents.append((
                 app: String(describing:frontmost?.localizedName ?? ".unknown" ),
