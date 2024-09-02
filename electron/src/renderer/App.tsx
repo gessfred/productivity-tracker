@@ -70,6 +70,7 @@ const BarChart = (props: any) => {
 
 function StatusBar() {
   const [status, setStatus] = useState<any>() 
+  const [version, setVersion] = useState<string>("")
   useEffect(() => {
     console.log("setting effect")
     const timer = setInterval(async () => {
@@ -77,14 +78,21 @@ function StatusBar() {
       const res = await fetch("http://localhost:3000/status")
       setStatus(await res.json())
     }, 10 * 1000)
+    fetch("http://localhost:3000/version").then(res => res.text()).then(setVersion)
     return () => {
       clearInterval(timer)
     }
   }, [])
+
   console.log(status)
   return (
     <div className='statusbar-container'>
+      <span className='statusbar-item'>
       {status?.last_event}
+      </span>
+      <span className='statusbar-item'>
+        v{version}
+      </span>
     </div>
   )
 }

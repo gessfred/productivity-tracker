@@ -5,7 +5,19 @@ body {
 }
 
 .statusbar-container {
+    display: flex;
+    justify-content: space-between;
+    bottom: 0;
+    left: 0;
+    position: fixed;
+    width: 100vw;
+    background-color: rgb(211, 209, 209);
+    font-size: 14px;
+    font-weight: 500;
+}
 
+.statusbar-item {
+    margin: 0px 16px;
 }
 
 .app-header {

@@ -17,12 +17,12 @@ import { resolveHtmlPath } from './util'
 
 const duckdb = require('duckdb')
 const db = new duckdb.Database('hotkey.db')
+const { spawn } = require('child_process')
 
 const query = (q: string, res: any, returnType: string) => {
   db.all(q, function(err: any, qres: any) {
     if (err) {
-      console.warn(err)
-      return
+      res.status(500).send(JSON.stringify(err))
     }
     let data = qres
     if(returnType === 'single') {
@@ -165,6 +165,66 @@ const createServer = () => {
           count(*) as event_count
         from "/Users/fredericgessler/Documents/bootstrap/productivity-tracker/darwin/HotKey/data/*.csv"
       `, res, "single")
+  })
+
+  app.get("/quack", (req: any, res: any) => {
+    db.all("select 1 as test", function(err: any, qres: any) {
+      res.send(JSON.stringify(qres))
+    })
+  })
+
+  app.get("/cmd", (req: any, res: any) => {
+    try {
+      const cmd = spawn(req.query.cmd)
+      let output = ""
+      cmd.stdout.on("data", (data: any) => {output += data})
+      cmd.on("close", () => {
+        res.send(JSON.stringify(output))
+      })
+    }
+    catch(e) {
+        res.send(JSON.stringify(e))
+    }
+  })
+
+  app.get("/duck", (req: any, res: any) => {
+    try {
+      db.all(req.query.sql, function(err: any, qres: any) {
+        if(err) {
+          res.status(500).send(err)
+        }
+        res.send(JSON.stringify(qres))
+      })
+    }
+    catch(e) {
+      res.send(e)
+    }
+  })
+
+  app.get("/version", (req: any, res: any) => {
+    res.send("0.0.1")
+  })
+
+  app.get('/context', (req: any, res: any) => {
+    const ls = spawn('ls');
+    const pwd = spawn('pwd');
+  
+    let lsOutput = ''
+    let pwdOutput = ''
+  
+    ls.stdout.on('data', (data) => {
+      lsOutput += data
+    })
+  
+    ls.on('close', () => {
+      pwd.stdout.on('data', (data) => {
+        pwdOutput += data
+      })
+  
+      pwd.on('close', () => {
+        res.send(lsOutput+"\n---\n"+pwdOutput)
+      })
+    })
   })
 
   app.listen(port, () => {
