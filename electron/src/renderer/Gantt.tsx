@@ -1,9 +1,9 @@
-import React from 'react';
-import { Group } from '@visx/group';
-import { scaleTime, scaleBand } from '@visx/scale';
-import { AxisBottom, AxisLeft } from '@visx/axis';
-import { Bar } from '@visx/shape';
-import { timeFormat } from 'd3-time-format';
+import React from 'react'
+import { Group } from '@visx/group'
+import { scaleTime, scaleBand } from '@visx/scale'
+import { AxisBottom, AxisLeft } from '@visx/axis'
+import { Bar } from '@visx/shape'
+import { timeFormat } from 'd3-time-format'
 
 interface SessionData {
     App: string;
