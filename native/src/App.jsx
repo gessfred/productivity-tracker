@@ -152,7 +152,7 @@ export function App() {
             <span>Today</span>
             <span>{data.currentTime}</span>
           </div>
-          <span id='active-time-total' className='card'>{formatDuration(data?.userSessions?.map((s) => s.duration).reduce((a, b) => a + b, 0))}</span>
+          <span id='active-time-total' className='card'>{data?.userSessions && formatDuration(data?.userSessions?.map((s) => s.duration).reduce((a, b) => a + b, 0))}</span>
         </div>
         <BarChart data={data.activeTimeByAppAggregate} />
         
