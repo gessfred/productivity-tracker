@@ -84,10 +84,17 @@ func getActiveWindowName() -> String? {
 func saveToCSV(filePath: String, data: [(app: String, title: String, category: String, timestamp: String, interval: UInt64)]) {
     var csvString = "Timestamp,Interval_ns,SeqNum,App,Title,Category\n"
     
-    for event in data {
+    /*for event in data {
         
         csvString.append("\(event.timestamp),\(event.interval),0,\"\(event.app)\",\"\(event.title)\",\(event.category)\n")
-    }
+    }*/
+    for event in data {
+            let escapedApp = event.app.replacingOccurrences(of: "\"", with: "\"\"")
+            let escapedTitle = event.title.replacingOccurrences(of: "\"", with: "\"\"")
+            let escapedCategory = event.category.replacingOccurrences(of: "\"", with: "\"\"")
+            
+            csvString.append("\(event.timestamp),\(event.interval),0,\"\(escapedApp)\",\"\(escapedTitle)\",\"\(escapedCategory)\"\n")
+        }
     
     do {
         try csvString.write(toFile: filePath, atomically: true, encoding: .utf8)

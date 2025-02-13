@@ -1,28 +1,46 @@
-const duckdb = require('duckdb')
-const db = new duckdb.Database('hotkey.db')
-const { spawn } = require('child_process')
 
-const query = (q, res, returnType) => {
-  db.all(q, function(err, qres) {
-    if (err) {
-      res.status(500).send(JSON.stringify(err))
-    }
-    let data = qres
-    if(returnType === 'single') {
-      data = data[0]
-    }
-    res.send(JSON.stringify(data, (_, v) => typeof v === 'bigint' ? v.toString() : v))
-  })
-}
 
-const createServer = () => {
+const createServer = async() => {
   const express = require('express')
   const cors = require('cors')
   const app = express()
   app.use(cors())
   const port = 3000
 
-  db.all(`
+  app.get("/version", (req, res) => {
+    res.send("0.0.1")
+  })
+
+  app.listen(port, () => {
+    console.log(`Example app listening on port ${port}`)
+  })
+}
+
+const createServer_ = async () => {
+  const express = require('express')
+  const cors = require('cors')
+  const app = express()
+  app.use(cors())
+  const port = 3000
+
+  const { execFileSync } = require('child_process')
+const path = require('path')
+
+const duckdbBin = path.join(process.resourcesPath, "assets" ,"duckdb")
+
+let duckdb = (sql) => {
+  const out = execFileSync(duckdbBin, ["--json", "hotkey.db", sql])
+  return JSON.parse(out)
+}
+
+let duckdbc = (sql) => {
+  const out = execFileSync(duckdbBin, ["--json", "hotkey.db", sql])
+  return out
+}
+
+const { spawn } = require('child_process')
+/*
+  duckdbc(`
       create or replace view active_sessions_by_app
       as
       with event_sequence as (
@@ -39,7 +57,7 @@ const createServer = () => {
             ) as record_rank,
             extract(epoch from ts - prev_ts) / 60 as diff_s,
             extract(epoch from now() - ts) / 60 as age_s
-        from "/Users/fredericgessler/Documents/bootstrap/productivity-tracker/darwin/HotKey/data/*.csv"
+        from read_csv("/Users/fredericgessler/Documents/bootstrap/productivity-tracker/darwin/HotKey/data/*.csv", ignore_errors=true)
     ),
     sessions_numbered as (
         select 
@@ -62,9 +80,9 @@ const createServer = () => {
     group by all
     having duration > 0 --and session_start > now() - interval '24 hours'
     order by app, session_date desc, session_number asc
-    `, ((err, res) => console.log(err)))
+    `)
 
-    db.all(`
+    duckdbc(`
       create or replace view active_sessions 
       as
       with event_sequence as (
@@ -80,7 +98,7 @@ const createServer = () => {
             ) as record_rank,
             extract(epoch from ts - prev_ts) / 60 as diff_s,
             extract(epoch from now() - ts) / 60 as age_s
-        from "/Users/fredericgessler/Documents/bootstrap/productivity-tracker/darwin/HotKey/data/*.csv"
+        from read_csv("/Users/fredericgessler/Documents/bootstrap/productivity-tracker/darwin/HotKey/data/*.csv", ignore_errors=true)
     ),
     sessions_numbered as (
         select 
@@ -101,27 +119,23 @@ const createServer = () => {
     group by all
     having duration > 0  and session_start > now() - interval '24 hours'
     order by session_date desc, session_number asc
-    `, ((err, res) => console.log(err)))
+    `)*/
 
   app.get('/eventcount', (req, res) => {
-    db.all('select count(*) as event_count from "/Users/fredericgessler/Documents/bootstrap/HotKey/data/*.csv"', function(err, qres) {
-      if (err) {
-        console.warn(err)
-        return
-      }
-      res.send(JSON.stringify(qres[0], (_, v) => typeof v === 'bigint' ? v.toString() : v))
-    })
+    const count = duckdb('select count(*) as event_count from read_csv("/Users/fredericgessler/Documents/bootstrap/HotKey/data/*.csv", ignore_errors=true)')
+    res.send(count.event_count)
   })
 
-  app.get("/activetime/byapp", (req, res) => {
-    query(`
+  /*app.get("/activetime/byapp", (req, res) => {
+    const active_time_by_app = duckdb(`
       select * from active_sessions_by_app
       where session_start > now() - interval '3 hours'
-    `, res, "full")
+    `)
+    res.send(active_time_by_app)
   })
 
   app.get("/activetime/byapp/aggregate", (req, res) => {
-    query(`
+    const agg_time_by_app = duckdb(`
       
     select 
       app,
@@ -129,18 +143,21 @@ const createServer = () => {
     from active_sessions_by_app 
     group by all
     order by total_time desc 
-    `, res, "full")
+    `)
+    res.send(agg_time_by_app)
   })
 
   app.get("/activetime/sessions", (req, res) => {
-    query(`
+    const active_sessions = duckdb(`
       
     select 
       *
     from active_sessions
-    `, res, "full")
-  })
+    `)
+    res.send(active_sessions)
+  })*/
 
+  /*
   app.get("/status", (req, res) => {
     query(`
         select 
@@ -154,9 +171,9 @@ const createServer = () => {
     db.all("select 1 as test", function(err, qres) {
       res.send(JSON.stringify(qres))
     })
-  })
+  })*/
 
-  app.get("/cmd", (req, res) => {
+  /*app.get("/cmd", (req, res) => {
     try {
       const cmd = spawn(req.query.cmd)
       let output = ""
@@ -182,7 +199,7 @@ const createServer = () => {
     catch(e) {
       res.send(e)
     }
-  })
+  })*/
 
   app.get("/version", (req, res) => {
     res.send("0.0.1")
